@@ -1,0 +1,261 @@
+<!DOCTYPE html>
+<html lang="mk">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>BLiZ TV | Reseller Test</title>
+<style>
+:root{color-scheme:dark}*{box-sizing:border-box}body{margin:0;min-height:100vh;background:linear-gradient(90deg,rgba(1,6,18,.48),rgba(1,8,20,.25),rgba(1,6,18,.48)),url("bliztv-reseller-bg.png") center center / cover no-repeat fixed #030710;color:#eef6ff;font-family:system-ui,Arial,sans-serif;display:grid;place-items:center;padding:22px}.panel{width:min(440px,100%);background:rgba(3,12,29,.86);backdrop-filter:blur(18px);-webkit-backdrop-filter:blur(18px);border:1px solid rgba(57,198,255,.6);border-radius:22px;padding:30px;box-shadow:0 20px 75px #000c,0 0 28px #00bfff38}.brand{text-align:center;font-size:30px;font-weight:900;letter-spacing:2px}.brand span{color:#6cff57;text-shadow:0 0 15px #32ff5a88}.sub{text-align:center;color:#9ab0c4;font-size:14px;margin:8px 0 26px}label{display:block;font-size:13px;color:#b8c9da;margin:15px 0 7px}input{width:100%;padding:13px 14px;background:#081426;border:1px solid #35536d;border-radius:10px;color:#fff;font-size:15px}button{width:100%;margin-top:22px;padding:13px;border:0;border-radius:11px;background:linear-gradient(100deg,#17d6ed,#63f44a);color:#071608;box-shadow:0 0 20px #24edb455;font-weight:800;font-size:15px;cursor:pointer}button:disabled{opacity:.6;cursor:wait}.secondary{background:#17344c;color:#d7e7f5;margin-top:14px}.error{color:#ffb3b3}.success{color:#95ef9b}.notice{margin-top:17px;font-size:13px;min-height:18px;overflow-wrap:anywhere}.hide{display:none}.balance{font-size:52px;color:#7eff65;font-weight:850;margin:6px 0}.small{color:#a9bfd0;font-size:13px}.name{font-size:19px;font-weight:700}.generated-code{margin-top:12px;padding:14px;background:#081426;border:1px solid #4b9e85;border-radius:10px;overflow-wrap:anywhere;font-family:monospace;font-size:15px;color:#9dffa1}.chip{display:inline-block;background:#1a3e34;color:#a8f8a5;padding:6px 10px;border-radius:20px;font-size:12px;margin-top:10px}
+@media(max-width:650px){body{background-attachment:scroll;background-position:center center;padding:14px}.panel{padding:24px 20px;background:rgba(3,12,29,.92)}}
+</style>
+</head>
+<body>
+<main class="panel">
+  <div class="brand">BLiZ <span>TV</span></div>
+  <div class="sub">Reseller Panel · Тест верзија</div>
+  <section id="loginSection">
+    <form id="loginForm">
+      <label for="email">Email</label>
+      <input id="email" type="email" autocomplete="username" required placeholder="reseller@example.com" />
+      <label for="password">Password</label>
+      <input id="password" type="password" autocomplete="current-password" required placeholder="Внеси лозинка" />
+      <button id="loginButton" type="submit">Login</button>
+    </form>
+    <button id="forgotButton" class="secondary" type="button">Forgot password?</button>
+  </section>
+  <section id="forgotSection" class="hide">
+    <form id="forgotForm">
+      <label for="recoveryEmail">Email за ресетирање</label>
+      <input id="recoveryEmail" type="email" required autocomplete="email" placeholder="reseller@example.com" />
+      <button id="sendRecoveryButton" type="submit">Испрати линк</button>
+    </form>
+    <button id="backButton" class="secondary" type="button">Назад на Login</button>
+  </section>
+  <section id="resetSection" class="hide">
+    <form id="resetForm">
+      <label for="newPassword">Нова лозинка (најмалку 8 знаци)</label>
+      <input id="newPassword" type="password" required minlength="8" autocomplete="new-password" />
+      <label for="confirmPassword">Повтори ја новата лозинка</label>
+      <input id="confirmPassword" type="password" required minlength="8" autocomplete="new-password" />
+      <button id="savePasswordButton" type="submit">Зачувај нова лозинка</button>
+    </form>
+  </section>
+  <section id="dashboard" class="hide">
+    <div class="name" id="resellerName"></div>
+    <div class="chip">Активен реселер</div>
+    <p class="small">Достапни кредити</p>
+    <div class="balance" id="credits">—</div>
+    <p class="small">TEST: 20 бесплатни кодови дневно · YEARLY: 1 кредит · LIFETIME: 2 кредити</p>
+    <p class="small" id="testRemaining">TEST денес: се проверува...</p>
+    <button id="testButton" type="button">Generate TEST · 24H · Бесплатно</button>
+    <button id="yearlyButton" type="button">Generate YEARLY · −1 Credit</button>
+    <button id="lifetimeButton" type="button">Generate LIFETIME · −2 Credits</button>
+    <div id="generatedArea" class="hide">
+      <p class="small">Нов активациски код</p>
+      <div id="generatedCode" class="generated-code"></div>
+      <button id="copyButton" class="secondary" type="button">Copy Code</button>
+    </div>
+    
+<button id="historyButton" class="secondary" type="button">
+  My Activation Codes
+</button>
+
+<div id="historyArea" class="hide">
+  <h3>My Activation Codes</h3>
+  <div id="historyList"></div>
+</div>
+
+    <button id="refreshButton" class="secondary" type="button">Освежи кредити</button>
+    <button id="logoutButton" class="secondary" type="button">Logout</button>
+  </section>
+  <div id="status" class="notice" role="status" aria-live="polite"></div>
+</main>
+<script type="module">
+import { createClient } from 'https://esm.sh/@supabase/supabase-js@2';
+const SUPABASE_URL = 'https://noyvamodeyshwnpssvpf.supabase.co';
+const SUPABASE_PUBLISHABLE_KEY = 'sb_publishable_dyPJYKKpprqYXdjWnhl6wQ_bz9eVrwx';
+const supabase = createClient(SUPABASE_URL, SUPABASE_PUBLISHABLE_KEY, {auth:{persistSession:true,autoRefreshToken:true,detectSessionInUrl:true}});
+const $ = id => document.getElementById(id);
+let accessToken = null;
+function status(message, isError=false){$('status').textContent=message;$('status').className='notice '+(isError?'error':'success')}
+function busy(on){for(const id of ['loginButton','refreshButton','testButton','yearlyButton','lifetimeButton'])$(id).disabled=on}
+function showSection(id){for(const name of ['loginSection','forgotSection','resetSection','dashboard'])$(name).classList.toggle('hide',name!==id)}
+function showLogin(){accessToken=null;showSection('loginSection');$('password').value='';$('generatedArea').classList.add('hide');$('generatedCode').textContent=''}
+async function apiRequest(action, extra={}){
+  const {data:{session},error}=await supabase.auth.getSession();
+  if(error||!session)throw new Error('Сесијата е истечена. Најави се повторно.');
+  accessToken=session.access_token;
+  const response=await fetch(`${SUPABASE_URL}/functions/v1/bliztv-reseller-api`,{method:'POST',headers:{'Authorization':`Bearer ${accessToken}`,'apikey':SUPABASE_PUBLISHABLE_KEY,'Content-Type':'application/json'},body:JSON.stringify(action?{action,...extra}:{})});
+  const data=await response.json().catch(()=>({}));
+  if(!response.ok||!data.success)throw new Error(data.error||`API грешка (${response.status})`);
+  return data;
+}
+async function loadDashboard(){
+  if(!accessToken){showLogin();return}
+  const data=await apiRequest();
+  $('resellerName').textContent=data.reseller_name||'Reseller';
+  $('credits').textContent=String(data.credits??0);
+  showSection('dashboard');status('Успешно поврзување со BLiZ TV Reseller API.');
+  try{await updateTestCounter()}catch{$('testRemaining').textContent='TEST лимит: не може да се вчита';}
+}
+$('loginForm').addEventListener('submit',async event=>{
+  event.preventDefault();busy(true);status('Се проверува најавата...');
+  try{
+    const {data,error}=await supabase.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});
+    if(error||!data.session)throw new Error(error?.message||'Неуспешна најава');
+    accessToken=data.session.access_token;
+    await loadDashboard();
+  }catch(err){await supabase.auth.signOut();showLogin();status(err.message||'Грешка при најава',true)}finally{busy(false)}
+});
+$('forgotButton').addEventListener('click',()=>{$('recoveryEmail').value=$('email').value;showSection('forgotSection');status('Внеси email за ресетирање.')});
+$('backButton').addEventListener('click',()=>{showLogin();status('')});
+$('forgotForm').addEventListener('submit',async event=>{
+  event.preventDefault();$('sendRecoveryButton').disabled=true;status('Се испраќа линк...');
+  try{
+    const {error}=await supabase.auth.resetPasswordForEmail(
+  $('recoveryEmail').value.trim(),
+  {
+    redirectTo: 'https://bliznak1988.github.io/Bliztv-website/reseller-test.html'
+  }
+);
+    if(error)throw error;
+    status('Ако постои корисник со овој email, ќе добие линк. Провери Inbox и Spam.');
+  }catch(err){status(err.message||'Грешка при испраќање',true)}finally{$('sendRecoveryButton').disabled=false}
+});
+$('resetForm').addEventListener('submit',async event=>{
+  event.preventDefault();
+  if($('newPassword').value!==$('confirmPassword').value){status('Лозинките не се исти.',true);return}
+  $('savePasswordButton').disabled=true;status('Се зачувува лозинката...');
+  try{
+    const {data:{session},error:sessionError}=await supabase.auth.getSession();
+    if(sessionError||!session)throw new Error('Линкот е невалиден или истечен. Побарај нов линк.');
+    const {error}=await supabase.auth.updateUser({password:$('newPassword').value});
+    if(error)throw error;
+    await supabase.auth.signOut();history.replaceState(null,'',location.pathname);showLogin();
+    status('Лозинката е сменета. Најави се со новата лозинка.');
+  }catch(err){status(err.message||'Грешка при промена',true)}finally{$('savePasswordButton').disabled=false}
+});
+const params=new URLSearchParams(location.search);
+const linkType=params.get('type')||(location.hash.match(/(?:^|[&#])type=([^&]+)/)?.[1]??'');
+const recoveryLink=linkType==='recovery'||linkType==='invite'||params.has('token_hash');
+if(recoveryLink){
+  showSection('resetSection');
+status('Се проверува линкот за поставување лозинка...');
+  (async()=>{
+    try{
+      const params=new URLSearchParams(location.search);
+     if(params.has('token_hash')){
+  const otpType = linkType === 'invite' ? 'invite' : 'recovery';
+
+  const {error}=await supabase.auth.verifyOtp({
+    token_hash:params.get('token_hash'),
+    type:otpType
+  });
+
+  if(error)throw error;
+}
+      const {data:{session},error}=await supabase.auth.getSession();
+      if(error||!session)throw new Error('Линкот е невалиден или истечен. Побарај нов линк.');
+      status('Внеси ја новата лозинка.');
+    }catch(err){status(err.message||'Неуспешна проверка на линкот',true)}
+  })();
+}
+async function updateTestCounter(){
+  const data=await apiRequest('list_codes');
+  // The API currently returns only the latest 100 codes; this is an indicative counter.
+  const today=new Date().toISOString().slice(0,10);
+  const count=(data.codes||[]).filter(c=>c.code_type==='test' &&
+    typeof c.created_at==='string' && c.created_at.slice(0,10)===today).length;
+  $('testRemaining').textContent=`TEST денес: најмалку ${count}/20 (UTC)`;
+}
+async function generateTypedCode(type,cost){
+  const labels={test:'TEST 24H',yearly:'YEARLY 365 дена',lifetime:'LIFETIME'};
+  if(!confirm(`Генерирај ${labels[type]} код? ${cost===0?'Бесплатно':`Цена: ${cost} кредит(и)`}.`))return;
+  busy(true);status('Се генерира код...');
+  try{
+    const data=await apiRequest('generate_typed_code',{code_type:type});
+    if(typeof data.activation_code!=='string'||!data.activation_code)
+      throw new Error('Нема код во одговорот. Провери ја историјата пред повторен обид.');
+    $('generatedCode').textContent=data.activation_code;
+    $('generatedArea').classList.remove('hide');
+    if(data.credits!==null&&data.credits!==undefined)$('credits').textContent=String(data.credits);
+    status(`${labels[type]} кодот е генериран. Копирај го или зачувај го.`);
+    try{await updateTestCounter()}catch{}
+  }catch(err){status((err.message||'Грешка')+' Провери ја историјата пред повторен обид.',true)}
+  finally{busy(false)}
+}
+$('testButton').addEventListener('click',()=>generateTypedCode('test',0));
+$('yearlyButton').addEventListener('click',()=>generateTypedCode('yearly',1));
+$('lifetimeButton').addEventListener('click',()=>generateTypedCode('lifetime',2));
+
+$('historyButton').addEventListener('click', async () => {
+  const historyBtn = $('historyButton');
+  const area = $('historyArea');
+  const list = $('historyList');
+
+  if (!area.classList.contains('hide')) {
+    area.classList.add('hide');
+    return;
+  }
+
+  historyBtn.disabled = true;
+  list.textContent = 'Се вчитуваат кодовите...';
+  area.classList.remove('hide');
+
+  try {
+    const data = await apiRequest('list_codes');
+    list.replaceChildren();
+
+    if (!Array.isArray(data.codes)) {
+      throw new Error('Невалиден одговор од серверот.');
+    }
+
+    if (data.codes.length === 0) {
+      list.textContent = 'Сè уште немаш генерирани кодови.';
+      return;
+    }
+
+    for (const code of data.codes) {
+      const item = document.createElement('div');
+      item.style.cssText =
+        'padding:12px;margin:10px 0;border:1px solid #31516a;border-radius:10px;overflow-wrap:anywhere;';
+
+      const codeText = document.createElement('strong');
+      codeText.textContent = code.activation_code;
+
+      const details = document.createElement('p');
+      details.className = 'small';
+
+      const created = code.created_at
+        ? new Date(code.created_at).toLocaleString('mk-MK')
+        : '—';
+      const activated = code.activated_at
+        ? new Date(code.activated_at).toLocaleString('mk-MK')
+        : '—';
+
+      details.textContent =
+        'Создаден: ' + created +
+        ' | Тип: ' + (code.code_type||'lifetime').toUpperCase() +
+         ' | Статус: ' + (code.is_used ? 'Активиран' : 'Неактивиран') +
+        ' | Активиран на: ' + activated +
+         ' | Истекува: ' + (code.expires_at ? new Date(code.expires_at).toLocaleString('mk-MK') : '—');
+
+      item.append(codeText, details);
+      list.appendChild(item);
+    }
+  } catch (err) {
+    list.textContent = 'Грешка: ' + (err.message || 'Не може да се вчита историјата.');
+  } finally {
+    historyBtn.disabled = false;
+  }
+});
+
+$('copyButton').addEventListener('click',async()=>{
+  const code=$('generatedCode').textContent;
+  try{await navigator.clipboard.writeText(code);status('Кодот е копиран.')}catch{status('Не може автоматски да се копира. Селектирај го кодот рачно.',true)}
+});
+$('refreshButton').addEventListener('click',async()=>{busy(true);try{await loadDashboard()}catch(err){status(err.message||'Грешка',true)}finally{busy(false)}});
+$('logoutButton').addEventListener('click',async()=>{await supabase.auth.signOut();showLogin();status('Одјавен си.')});
+</script>
+</body>
+</html>

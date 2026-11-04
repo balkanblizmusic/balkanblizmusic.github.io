@@ -1,0 +1,514 @@
+
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>BLiZ TV | Super Admin</title>
+<script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2"></script>
+<style>
+* { box-sizing: border-box; }
+body {
+  margin: 0;
+  min-height: 100vh;
+  font-family: Arial, sans-serif;
+  background: #061321;
+  color: white;
+}
+header {
+  background: #0b2237;
+  border-bottom: 1px solid #23445c;
+  padding: 22px;
+}
+h1 { color: #70ff52; margin: 0; }
+main { max-width: 1100px; margin: auto; padding: 24px; }
+.card {
+  background: #10283e;
+  border: 1px solid #254761;
+  padding: 22px;
+  border-radius: 15px;
+  margin-bottom: 20px;
+}
+input, select {
+  width: 100%;
+  padding: 13px;
+  margin: 8px 0;
+  border: 1px solid #35536d;
+  border-radius: 8px;
+  font-size: 15px;
+}
+button {
+  padding: 12px 15px;
+  border: 0;
+  border-radius: 8px;
+  background: #65ed4b;
+  color: #062010;
+  font-weight: bold;
+  cursor: pointer;
+  margin: 5px 5px 5px 0;
+}
+button:disabled { opacity: .5; cursor: not-allowed; }
+.secondary { background: #29465d; color: white; }
+.danger { background: #e96c6c; color: #270909; }
+.hidden { display: none; }
+#message { margin: 12px 0; color: #ffb3b3; }
+.table-wrap { overflow-x: auto; }
+table { width: 100%; border-collapse: collapse; }
+th, td {
+  padding: 14px;
+  border-bottom: 1px solid #29465d;
+  text-align: left;
+}
+th { color: #8fdcff; }
+.active { color: #76ff70; }
+.inactive { color: #ff8888; }
+.stats { font-size: 26px; font-weight: bold; color: #70ff52; }
+label { display: block; margin-top: 12px; }
+small { color: #a5b9cd; }
+</style>
+</head>
+<body>
+
+<header>
+  <h1>BLiZ TV</h1>
+  <small>SUPER ADMIN DASHBOARD</small>
+</header>
+
+<main>
+  <section id="loginBox" class="card">
+    <h2>Admin Login</h2>
+    <input id="email" type="email" placeholder="Admin email">
+    <input id="password" type="password" placeholder="Password">
+    <button id="loginButton">Login</button>
+  </section>
+
+  <section id="dashboard" class="hidden">
+    <div class="card">
+      <h2>Reseller Management</h2>
+      <p>Total Resellers</p>
+      <div id="totalResellers" class="stats">0</div>
+      <button id="refreshButton">Refresh</button>
+      <button id="logoutButton" class="secondary">Logout</button>
+    </div>
+
+    <div class="card table-wrap">
+      <h3>All Resellers</h3>
+      <table>
+        <thead>
+          <tr>
+            <th>Reseller</th>
+            <th>Credits</th>
+            <th>Status</th>
+            <th>Created</th>
+          </tr>
+        </thead>
+        <tbody id="resellerRows"></tbody>
+      </table>
+    </div>
+
+    <div class="card">
+      <h2>Manage Credits</h2>
+
+      <label for="resellerSelect">Select Reseller</label>
+      <select id="resellerSelect"></select>
+
+      <label for="amount">Number of Credits</label>
+      <input id="amount" type="number" min="1" max="100000"
+             step="1" placeholder="Example: 10">
+
+      <label for="reason">Reason</label>
+      <input id="reason" type="text" maxlength="200"
+             placeholder="Example: Payment received">
+
+      <button id="addButton">+ Add Credits</button>
+      <button id="removeButton" class="danger">- Remove Credits</button>
+
+      <p><small>Every change is recorded in Supabase credit history.</small></p>
+    </div>
+  </section>
+  <section id="createResellerSection" class="card hidden">
+  <h2>➕ Create New Reseller</h2>
+
+  <label for="newResellerName">Reseller Name</label>
+  <input
+    id="newResellerName"
+    type="text"
+    placeholder="Enter reseller name"
+    maxlength="100"
+  >
+
+  <label for="newResellerEmail">Email Address</label>
+  <input
+    id="newResellerEmail"
+    type="email"
+    placeholder="reseller@example.com"
+  >
+
+  <button id="createResellerButton" type="button">
+    Create Reseller &amp; Send Invitation
+  </button>
+
+  <p><small>
+    The reseller will receive an email invitation
+    to set their password. Starting balance: 0 credits.
+  </small></p>
+</section>
+  
+<section id="historySection" class="card hidden">
+  <h2>Credit History</h2>
+  <button id="historyButton">Refresh History</button>
+
+  <div class="table-wrap">
+    <table>
+      <thead>
+        <tr>
+          <th>Date</th>
+          <th>Reseller</th>
+          <th>Amount</th>
+          <th>Reason</th>
+          <th>Activation Code</th>
+        </tr>
+      </thead>
+      <tbody id="historyRows"></tbody>
+    </table>
+  </div>
+</section>
+
+  <p id="message" role="status"></p>
+
+  </main>
+
+<script>
+const SUPABASE_URL =
+  "https://noyvamodeyshwnpssvpf.supabase.co";
+
+const SUPABASE_KEY =
+  "sb_publishable_dyPJYKKpprqYXdjWnhl6wQ_bz9eVrwx";
+
+const ADMIN_ID =
+  "a1388d57-c60b-4ab1-bf8a-44f03cd6d47e";
+
+const client = window.supabase.createClient(
+  SUPABASE_URL, SUPABASE_KEY
+);
+
+const $ = id => document.getElementById(id);
+const message = text => { $("message").textContent = text; };
+
+let busy = false;
+
+function setBusy(value) {
+  busy = value;
+  ["loginButton", "refreshButton", "addButton", "removeButton"]
+    .forEach(id => $(id).disabled = value);
+}
+
+function showLogin() {
+  $("loginBox").classList.remove("hidden");
+  $("dashboard").classList.add("hidden");
+}
+
+function showDashboard() {
+  $("loginBox").classList.add("hidden");
+  $("dashboard").classList.remove("hidden");
+}
+
+async function apiRequest(action, extra = {}) {
+  const { data: sessionData } = await client.auth.getSession();
+  const token = sessionData.session?.access_token;
+
+  if (!token) throw new Error("Please login again.");
+
+  const response = await fetch(
+    SUPABASE_URL + "/functions/v1/bliztv-super-admin",
+    {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "apikey": SUPABASE_KEY,
+        "Authorization": "Bearer " + token
+      },
+      body: JSON.stringify({ action, ...extra })
+    }
+  );
+
+  const result = await response.json();
+
+  if (!response.ok || !result.success) {
+    throw new Error(result.error || "Request failed");
+  }
+
+  return result;
+}
+
+async function loadResellers() {
+  const result = await apiRequest("list_resellers");
+  const resellers = result.resellers || [];
+
+  $("totalResellers").textContent = resellers.length;
+  $("resellerRows").replaceChildren();
+
+  const selected = $("resellerSelect").value;
+  $("resellerSelect").replaceChildren();
+
+  for (const reseller of resellers) {
+    const tr = document.createElement("tr");
+    const values = [
+      reseller.reseller_name || "Unnamed",
+      String(reseller.credits),
+      reseller.is_active ? "Active" : "Inactive",
+      new Date(reseller.created_at).toLocaleDateString()
+    ];
+
+    values.forEach((value, index) => {
+      const td = document.createElement("td");
+      td.textContent = value;
+      if (index === 2) {
+        td.className = reseller.is_active ? "active" : "inactive";
+      }
+      tr.appendChild(td);
+    });
+
+    $("resellerRows").appendChild(tr);
+
+    const option = document.createElement("option");
+    option.value = reseller.id;
+    option.textContent =
+      (reseller.reseller_name || "Unnamed") +
+      " — " + reseller.credits + " credits";
+    $("resellerSelect").appendChild(option);
+  }
+
+  if (resellers.some(r => r.id === selected)) {
+    $("resellerSelect").value = selected;
+  }
+}
+
+async function login() {
+  if (busy) return;
+  setBusy(true);
+  message("");
+
+  try {
+    const { data, error } = await client.auth.signInWithPassword({
+      email: $("email").value.trim(),
+      password: $("password").value
+    });
+
+    if (error) throw error;
+
+    if (data.user?.id !== ADMIN_ID) {
+      await client.auth.signOut();
+      throw new Error("Access denied");
+    }
+
+    await loadResellers();
+    showDashboard();
+  } catch (error) {
+    showLogin();
+    message(error.message);
+  } finally {
+    setBusy(false);
+  }
+}
+
+async function adjustCredits(direction) {
+  if (busy) return;
+
+  const resellerId = $("resellerSelect").value;
+  const rawAmount = $("amount").value.trim();
+  const quantity = Number(rawAmount);
+  const reason = $("reason").value.trim();
+
+  if (
+    !resellerId ||
+    !/^[1-9]\d*$/.test(rawAmount) ||
+    !Number.isSafeInteger(quantity) ||
+    quantity > 100000 ||
+    reason.length < 3 ||
+    reason.length > 200
+  ) {
+    message("Select a reseller, enter valid credits and a reason.");
+    return;
+  }
+
+  const amount = direction * quantity;
+  const selectedName =
+    $("resellerSelect").selectedOptions[0]?.textContent || "Reseller";
+
+  const confirmed = confirm(
+    (amount > 0 ? "ADD " : "REMOVE ") +
+    quantity + " credits for " + selectedName + "?"
+  );
+
+  if (!confirmed) return;
+
+  setBusy(true);
+  message("");
+
+  try {
+    const result = await apiRequest("adjust_credits", {
+      reseller_id: resellerId,
+      amount,
+      reason
+    });
+
+    message("Success! New balance: " + result.credits);
+    $("amount").value = "";
+    $("reason").value = "";
+
+    await loadResellers();
+  } catch (error) {
+    message(
+      error.message +
+      " If the request was interrupted, refresh and check balance before retrying."
+    );
+  } finally {
+    setBusy(false);
+  }
+}
+
+$("loginButton").addEventListener("click", login);
+
+$("refreshButton").addEventListener("click", async () => {
+  if (busy) return;
+  setBusy(true);
+  try {
+    await loadResellers();
+    message("Resellers updated.");
+  } catch (error) {
+    message(error.message);
+  } finally {
+    setBusy(false);
+  }
+});
+  $("createResellerButton").addEventListener("click", async () => {
+  const resellerName = $("newResellerName").value.trim();
+  const email = $("newResellerEmail").value.trim();
+
+  if (!resellerName || !email) {
+    message("Enter reseller name and email.");
+    return;
+  }
+
+  if (!confirm(`Create reseller and send invitation to ${email}?`)) {
+    return;
+  }
+
+  const button = $("createResellerButton");
+  button.disabled = true;
+
+  try {
+    const result = await apiRequest("create_reseller", {
+      reseller_name: resellerName,
+      email: email
+    });
+
+    $("newResellerName").value = "";
+    $("newResellerEmail").value = "";
+
+    await loadResellers();
+
+    message("Reseller created! Invitation sent to " + email);
+  } catch (error) {
+    message(error.message || "Could not create reseller.");
+  } finally {
+    button.disabled = false;
+  }
+});
+
+$("addButton").addEventListener("click", () => adjustCredits(1));
+  
+async function loadCreditHistory() {
+  const result = await apiRequest("list_credit_history");
+
+  const resellerNames = {};
+
+  for (const option of $("resellerSelect").options) {
+    resellerNames[option.value] =
+      option.textContent.split(" — ")[0];
+  }
+
+  $("historyRows").replaceChildren();
+
+  for (const entry of result.history || []) {
+    const tr = document.createElement("tr");
+
+    const values = [
+      new Date(entry.created_at).toLocaleString(),
+      resellerNames[entry.reseller_id] || "Unknown reseller",
+      entry.amount > 0 ? "+" + entry.amount : String(entry.amount),
+      entry.reason || "—",
+      entry.activation_code || "—"
+    ];
+
+    for (const value of values) {
+      const td = document.createElement("td");
+      td.textContent = value;
+      tr.appendChild(td);
+    }
+
+    $("historyRows").appendChild(tr);
+  }
+}
+
+$("historyButton").addEventListener("click", async () => {
+  if (busy) return;
+
+  setBusy(true);
+
+  try {
+    await loadCreditHistory();
+    message("Credit history updated.");
+  } catch (error) {
+    message(error.message);
+  } finally {
+    setBusy(false);
+  }
+});
+
+
+const originalShowDashboard = showDashboard;
+const originalShowLogin = showLogin;
+
+showDashboard = function() {
+  originalShowDashboard();
+  $("createResellerSection").classList.remove("hidden");
+  $("historySection").classList.remove("hidden");
+  loadCreditHistory().catch(error => message(error.message));
+};
+
+showLogin = function() {
+  originalShowLogin();
+  $("createResellerSection").classList.add("hidden");
+  $("historySection").classList.add("hidden");
+};
+
+
+$("removeButton").addEventListener("click", () => adjustCredits(-1));
+
+$("logoutButton").addEventListener("click", async () => {
+  await client.auth.signOut();
+  showLogin();
+  message("Logged out.");
+});
+
+(async () => {
+  const { data: { user } } = await client.auth.getUser();
+
+  if (user?.id !== ADMIN_ID) {
+    showLogin();
+    return;
+  }
+
+  try {
+    await loadResellers();
+    showDashboard();
+  } catch (error) {
+    showLogin();
+    message(error.message);
+  }
+})();
+</script>
+</body>
+</html>

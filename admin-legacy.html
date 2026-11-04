@@ -1,0 +1,325 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>BLiZ TV Admin</title>
+  <style>
+    body {
+      margin: 0;
+      min-height: 100vh;
+      display: grid;
+      place-items: center;
+      background: #020711;
+      color: white;
+      font-family: Arial, sans-serif;
+    }
+    main {
+      box-sizing: border-box;
+      width: min(420px, 92%);
+      padding: 26px;
+      border: 1px solid #16405a;
+      border-radius: 16px;
+      background: #06233a;
+    }
+    h1 { color: #65ff3e; }
+    input, button {
+      box-sizing: border-box;
+      width: 100%;
+      padding: 13px;
+      margin: 8px 0;
+      border-radius: 8px;
+      font-size: 16px;
+    }
+    input { background: white; border: 1px solid #aaa; }
+    button {
+      border: 0;
+      background: #65ff3e;
+      color: #020711;
+      font-weight: bold;
+      cursor: pointer;
+    }
+    button:disabled { opacity: .65; cursor: wait; }
+    #result, #trialResult { overflow-wrap: anywhere; }
+    .hidden { display: none; }
+    .hint { color: #c4d7e3; font-size: 13px; }
+  </style>
+</head>
+<body>
+<main>
+  <h1>BLiZ TV Admin</h1>
+
+  <section id="login">
+    <input id="email" type="email"
+      placeholder="Administrator email" autocomplete="username">
+    <input id="password" type="password"
+      placeholder="Password" autocomplete="current-password">
+    <button id="loginBtn" type="button">Sign in</button>
+    <button id="resetBtn" type="button">Forgot password?</button>
+  </section>
+
+  <section id="recovery" class="hidden">
+    <p>Enter your new password.</p>
+    <input id="newPassword" type="password"
+      placeholder="New password" autocomplete="new-password">
+    <button id="savePasswordBtn" type="button">Save new password</button>
+  </section>
+
+  <section id="panel" class="hidden">
+    <p>Signed in as administrator</p>
+
+    <button id="generateBtn" type="button">Generate Test Code</button>
+    <p id="result" aria-live="polite"></p>
+
+    <hr style="border-color:#16405a; margin:22px 0;">
+
+    <h2 style="color:#65ff3e;">IPTV Trial</h2>
+
+    <label for="trialNote">Notes — zabeleska za klientot</label>
+    <input
+      id="trialNote"
+      type="text"
+      maxlength="150"
+      placeholder="Primer: Marko - Telegram"
+    >
+
+    <button id="trialBtn" type="button">Generate IPTV Trial</button>
+    <div id="trialResult" class="hidden">
+      <p><strong>Username:</strong> <span id="trialUsername"></span></p>
+      <p><strong>Password:</strong> <span id="trialPassword"></span></p>
+      <p><strong>M3U URL:</strong></p>
+      <input id="trialM3u" type="text" readonly>
+      <button id="copyTrialBtn" type="button">Copy Trial Details</button>
+    </div>
+
+    <button id="logoutBtn" type="button">Sign out</button>
+  </section>
+
+  <p id="message" role="status" aria-live="polite"></p>
+</main>
+
+<script type="module">
+  import { createClient } from
+    "https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/+esm";
+
+  const SUPABASE_URL =
+    "https://noyvamodeyshwnpssvpf.supabase.co";
+  const SUPABASE_ANON_KEY =
+    "sb_publishable_dyPJYKKpprqYXdjWnhl6wQ_bz9eVrwx";
+  const ADMIN_USER_ID = "a1388d57-c60b-4ab1-bf8a-44f03cd6d47e";
+
+  const supabase = createClient(SUPABASE_URL, SUPABASE_ANON_KEY);
+  const $ = id => document.getElementById(id);
+
+  function message(text) {
+    $("message").textContent = text;
+  }
+
+  function show(section) {
+    ["login", "recovery", "panel"].forEach(id => {
+      $(id).classList.toggle("hidden", id !== section);
+    });
+  }
+
+  async function refreshSession() {
+    const { data, error } = await supabase.auth.getSession();
+
+    if (error) {
+      message("Could not check the session. Refresh the page.");
+      return;
+    }
+
+    const session = data.session;
+    if (session?.user?.id === ADMIN_USER_ID) {
+      show("panel");
+    } else {
+      show("login");
+      if (session) {
+        await supabase.auth.signOut();
+        message("This account is not authorized.");
+      }
+    }
+  }
+
+  supabase.auth.onAuthStateChange((event, session) => {
+    if (event === "PASSWORD_RECOVERY") {
+      show("recovery");
+      message("Enter your new password.");
+    } else if (event === "SIGNED_OUT") {
+      show("login");
+    } else if (event === "SIGNED_IN" && session) {
+      setTimeout(() => refreshSession(), 0);
+    }
+  });
+
+  $("loginBtn").addEventListener("click", async () => {
+    message("Signing in...");
+    const email = $("email").value.trim();
+    const password = $("password").value;
+
+    if (!email || !password) {
+      message("Enter your email and password.");
+      return;
+    }
+
+    const { error } = await supabase.auth.signInWithPassword({
+      email,
+      password
+    });
+
+    if (error) {
+      message("Sign-in failed. Use Forgot password? to set your password.");
+      return;
+    }
+
+    await refreshSession();
+  });
+
+  $("resetBtn").addEventListener("click", async () => {
+    const email = $("email").value.trim();
+
+    if (!email) {
+      message("Enter your administrator email first.");
+      return;
+    }
+
+    message("Requesting password reset...");
+    const { error } = await supabase.auth.resetPasswordForEmail(email, {
+      redirectTo: window.location.origin + "/admin.html"
+    });
+
+    if (error) {
+      message("Could not send reset email. Check Supabase URL settings.");
+    } else {
+      message("If the account exists, a reset link will arrive by email.");
+    }
+  });
+
+  $("savePasswordBtn").addEventListener("click", async () => {
+    const password = $("newPassword").value;
+
+    if (password.length < 8) {
+      message("Use a password with at least 8 characters.");
+      return;
+    }
+
+    message("Saving new password...");
+    const { error } = await supabase.auth.updateUser({ password });
+
+    if (error) {
+      message("Could not update password. Request a new reset link.");
+      return;
+    }
+
+    $("newPassword").value = "";
+    show("login");
+    message("Password saved. Now sign in with your new password.");
+  });
+
+  // Activation codes must use bliztv-generate-code, not the TrialIPTV function.
+  $("generateBtn").addEventListener("click", async () => {
+    $("result").textContent = "";
+    message("Generating code...");
+    $("generateBtn").disabled = true;
+
+    try {
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
+
+      if (sessionError || sessionData.session?.user?.id !== ADMIN_USER_ID) {
+        message("Please sign in with the administrator account.");
+        await refreshSession();
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke(
+        "bliztv-generate-code",
+        { body: {} }
+      );
+
+      if (error || !data?.success || !data?.activation_code) {
+        message(data?.error || error?.message || "Could not generate code.");
+        return;
+      }
+
+      $("result").textContent = "Test code: " + data.activation_code;
+      message("Code generated successfully.");
+    } catch {
+      message("Could not generate code. Check your connection and try again.");
+    } finally {
+      $("generateBtn").disabled = false;
+    }
+  });
+
+  $("logoutBtn").addEventListener("click", async () => {
+    await supabase.auth.signOut();
+    $("result").textContent = "";
+    message("Signed out.");
+    show("login");
+  });
+
+  // TrialIPTV remains separate and continues to use bliztv-generate-trial.
+  $("trialBtn").addEventListener("click", async () => {
+    const btn = $("trialBtn");
+    const result = $("trialResult");
+
+    btn.disabled = true;
+    result.classList.add("hidden");
+    message("Creating IPTV trial...");
+
+    try {
+      const { data: sessionData, error: sessionError } =
+        await supabase.auth.getSession();
+
+      if (
+        sessionError ||
+        sessionData.session?.user?.id !== ADMIN_USER_ID
+      ) {
+        message("Please sign in with the administrator account.");
+        await refreshSession();
+        return;
+      }
+
+      const { data, error } = await supabase.functions.invoke(
+        "bliztv-generate-trial",
+        { body: {} }
+      );
+
+      if (error || !data?.success || !data?.m3u_url) {
+        message(data?.error || error?.message || "Could not create trial.");
+        return;
+      }
+
+      $("trialUsername").textContent = data.username || "Not provided";
+      $("trialPassword").textContent = data.password || "Not provided";
+      $("trialM3u").value = data.m3u_url;
+
+      result.classList.remove("hidden");
+      message("IPTV trial created successfully.");
+    } catch {
+      message("Could not create trial. Check your connection.");
+    } finally {
+      btn.disabled = false;
+    }
+  });
+
+  $("copyTrialBtn").addEventListener("click", async () => {
+    const details =
+      "BLiZ TV — IPTV Trial\n" +
+      "Username: " + $("trialUsername").textContent + "\n" +
+      "Password: " + $("trialPassword").textContent + "\n" +
+      "M3U URL: " + $("trialM3u").value;
+
+    try {
+      await navigator.clipboard.writeText(details);
+      message("Trial details copied. You can send them to your client.");
+    } catch {
+      $("trialM3u").select();
+      message("Select and copy the M3U link manually.");
+    }
+  });
+
+  await refreshSession();
+</script>
+</body>
+</html>
