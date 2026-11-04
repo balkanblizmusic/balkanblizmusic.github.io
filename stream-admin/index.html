@@ -1,0 +1,549 @@
+<!doctype html><html lang="mk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>BLiZ TV Streaming — Super Admin</title><meta name="robots" content="noindex,nofollow"><meta name="referrer" content="no-referrer"><style>
+:root{font-family:Arial,system-ui,sans-serif;color:#eaf4ff;background:#091323}*{box-sizing:border-box}body{margin:0}.wrap{display:flex;min-height:100vh}aside{width:230px;background:#101e32;padding:20px;border-right:1px solid #29415b}aside img{width:100%;border-radius:12px}nav button{display:block;width:100%;text-align:left;margin:8px 0;background:transparent;color:#c7d9ec;border:0;border-radius:9px;padding:13px;cursor:pointer}nav button.active,nav button:hover{background:#1d3a57;color:#61f2cb}main{flex:1;padding:26px;min-width:0}.panel{background:#14263c;border:1px solid #2c4863;border-radius:14px;padding:20px;margin:14px 0}input,select{background:#091a2d;color:white;border:1px solid #39546f;border-radius:8px;padding:11px;width:100%;margin:6px 0 12px}button.primary{background:#17c9a5;color:#06221d;border:0;padding:11px 16px;border-radius:9px;font-weight:bold;cursor:pointer}button.secondary{background:#28435e;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}button.danger{background:#683247;color:#fff;border:0;padding:8px 12px;border-radius:8px;cursor:pointer}button:disabled{opacity:.5}table{width:100%;border-collapse:collapse}td,th{text-align:left;padding:11px;border-bottom:1px solid #34506a;overflow-wrap:anywhere}th{color:#8eacc7}h1{margin-top:0}small,.muted{color:#91abc6}.hide{display:none!important}.actions{display:flex;gap:7px;flex-wrap:wrap}.grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:12px}.status{padding:10px;border-radius:8px;margin:10px 0;background:#25425b;white-space:pre-wrap}.error{background:#642f3b}#auth{max-width:420px;margin:9vh auto}#auth img{width:100%;max-height:140px;object-fit:contain}label{display:block} .scroll{overflow-x:auto}@media(max-width:750px){.wrap{display:block}aside{width:auto}nav{display:flex;flex-wrap:wrap}nav button{width:auto}main{padding:14px}}
+#globalSearchResults{display:grid;gap:8px} .search-result{width:100%;text-align:left;background:#102b43;border:1px solid #34506a;border-radius:10px;padding:12px;color:#eaf4ff;cursor:pointer}.search-result:hover,.search-result:focus{border-color:#17c9a5;background:#1b3d55}.search-result small{display:block;margin-top:5px}.detail-card{background:#0e2035;border:1px solid #39546f;border-radius:12px;padding:18px;margin-top:14px}.detail-card h3{margin-top:0}.detail-grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:10px}.detail-grid>div{padding:12px;border:1px solid #39546f;border-radius:9px}.tree-line{padding:7px 0;border-bottom:1px solid #27435d} </style></head><body>
+<section id="auth" class="panel"><img src="logo.jpg" alt="BLiZ TV"><h2>Streaming Super Admin</h2><p class="muted">Најави се со корисникот од новиот Supabase проект.</p><form id="login"><label>Email<input id="email" type="email" required autocomplete="username"></label><label>Лозинка<input id="password" type="password" required autocomplete="current-password"></label><button class="primary" type="submit">Најави се</button></form><div id="authMsg" class="status hide"></div></section>
+<div id="app" class="wrap hide"><aside><img src="logo.jpg" alt="BLiZ TV"><h3>STREAMING CONTROL</h3><p class="muted" id="who"></p><nav><button data-tab="dashboard" class="active">▣ Dashboard</button><button data-tab="categories">▤ Categories</button><button data-tab="channels">▣ Live Channels</button><button data-tab="m3uImport">⇧ M3U Import</button><button data-tab="m3uSources">↻ M3U Sources</button><button data-tab="packages">▦ TV Packages</button><button data-tab="resellers">♙ Resellers</button><button data-tab="clients">♧ Clients</button><button data-tab="billing">◈ Subscriptions</button><button data-tab="history">▤ Credit History</button><button data-tab="trials">◷ Trial Management</button></nav><button id="logout" class="secondary">Одјави се</button></aside><main><h1 id="heading">Dashboard</h1><div class="panel" id="globalSearchPanel"><h3>🔎 Универзално пребарување</h3><label for="globalSearch">Реселер, подреселер или клиент</label><input id="globalSearch" type="search" placeholder="Пример: Toni, rade, TEST-RESELLER" maxlength="120" autocomplete="off"><p id="globalSearchInfo" class="muted">Внеси име за пребарување низ мрежата.</p><div id="globalSearchResults"></div><div id="globalSearchDetail" class="hide"></div></div><div id="notice" class="status hide"></div><section id="dashboard" class="page"><div class="grid"><div class="panel"><h2 id="countCats">0</h2>Категории</div><div class="panel"><h2 id="countChannels">0</h2>Канали</div><div class="panel"><h2 id="countResellers">0</h2>Реселери</div><div class="panel"><h2 id="countClients">0</h2>Клиенти</div></div><div class="grid" aria-label="Дополнителна статистика"><div class="panel"><h2 id="dashActiveClients">—</h2>Активни претплати</div><div class="panel"><h2 id="dashExpiredClients">—</h2>Истечени претплати</div><div class="panel"><h2 id="dashCredits">—</h2>Кредити кај реселери</div><div class="panel"><h2 id="dashTrialsToday">—</h2>Тестови денес (UTC)</div></div><div class="panel"><h3>⚠ Претплати што истекуваат наскоро</h3><div class="grid"><div><h2 id="exp1">0</h2>Денес / до 1 ден</div><div><h2 id="exp3">0</h2>До 3 дена</div><div><h2 id="exp7">0</h2>До 7 дена</div></div><p class="muted">Бројките се пресметани од последните 500 вчитани претплати.</p></div><div class="panel"><h3>Краток преглед на клиенти</h3><p class="muted">Последни 100 од вчитаните клиентски претплати. За пребарување користи ја лупата погоре.</p><div class="scroll"><table><thead><tr><th>Клиент</th><th>Реселер</th><th>Вкупно месеци</th><th>Истекува</th><th>Статус</th></tr></thead><tbody id="dashClientRows"></tbody></table></div><p id="dashSearchInfo" class="muted"></p></div><div class="panel"><h3>Реселерска мрежа</h3><p class="muted">Приказ на директниот родител, салдото и статусот. Сите нивоа се вклучени.</p><div class="scroll"><table><thead><tr><th>Реселер</th><th>Родител</th><th>Кредити</th><th>Статус</th></tr></thead><tbody id="dashResellerRows"></tbody></table></div></div><div class="panel"><h3>BLiZ TV Streaming v13</h3><p>Поврзано со независниот Supabase проект. Ова е управување со метаподатоци — не е стриминг сервер.</p><button class="primary" id="refresh">Освежи податоци</button></div></section>
+<section id="categories" class="page hide"><div class="panel"><h3>Додај категорија</h3><form id="catForm"><div class="grid"><label>Име<input id="catName" required maxlength="120" placeholder="MK | Sports"></label><label>Тип<select id="catType"><option value="live">Live TV</option><option value="movie">Movies</option><option value="series">Series</option></select></label><label>Редослед<input id="catSort" type="number" value="0"></label></div><button class="primary">Зачувај категорија</button></form></div><div class="panel scroll"><h3>Категории</h3><table><thead><tr><th>Име</th><th>Тип</th><th>Редослед</th><th>Акција</th></tr></thead><tbody id="catRows"></tbody></table></div></section>
+<section id="channels" class="page hide"><div class="panel" id="v17Editor"><h3>🌍 Advanced Channel Editor — v18</h3><p class="muted">Уредувај зачувани канали по држава и група. Преместувањето не ги менува ТВ-пакетите на клиентите.</p><div class="grid"><label>Пребарај канал<input id="v17Search" type="search" placeholder="Име на канал"></label><label>Држава<select id="v17CountryFilter"></select></label><label>Група<select id="v17GroupFilter"></select></label></div><div class="actions"><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="v17All" style="width:auto"> Означи ги видливите</label><button type="button" id="v17Clear" class="secondary">Одштиклирај</button><button type="button" id="v18Delete" class="danger">Избриши означени</button><button type="button" id="v18Reload" class="secondary">Освежи канали</button></div><div class="scroll"><table><thead><tr><th>✓</th><th>Канал</th><th>Држава</th><th>Група</th><th>Уреди</th></tr></thead><tbody id="v17Rows"></tbody></table></div><p id="v17Count" class="muted"></p><p id="v18LoadInfo" class="muted">Се вчитуваат каналите во страници од Supabase.</p><h4>Масовно преместување / нова група</h4><div class="grid"><label>Држава<select id="v17TargetCountry"></select></label><label>Група (постоечка или нова)<input id="v17TargetGroup" maxlength="90" list="v17GroupNames" placeholder="Sport, News, Movies..."><datalist id="v17GroupNames"></datalist></label></div><button type="button" id="v17Move" class="primary">Премести ги означените канали</button><p id="v17Info" class="muted"></p></div><div class="panel"><h3>Додај канал</h3><form id="channelForm"><div class="grid"><label>Име<input id="channelName" required maxlength="150"></label><label>Категорија<select id="channelCategory"></select></label><label>Stream URL (само дозволен извор)<input id="channelUrl" type="url" placeholder="https://..."></label><label>Лого URL<input id="channelLogo" type="url" placeholder="https://..."></label><label>EPG ID<input id="channelEpg" maxlength="200"></label><label>Статус<select id="channelActive"><option value="false">Неактивен</option><option value="true">Активен</option></select></label></div><button class="primary">Зачувај канал</button></form></div><div class="panel scroll"><h3>Канали</h3><table><thead><tr><th>Име</th><th>Категорија</th><th>Статус</th><th>Акција</th></tr></thead><tbody id="channelRows"></tbody></table></div></section>
+<section id="m3uImport" class="page hide">
+<div class="panel"><h3>📥 M3U Import — v16.1 · Држави и групи</h3><p class="muted">Увези само листи за кои имаш право на користење. Прво прегледај, потоа означи канали и увези. URL мора да дозволува CORS; не се испраќаат лозинки до посреднички сервер.</p>
+<div class="grid"><label>M3U URL<input id="m15Url" type="url" placeholder="https://example.com/list.m3u"></label><label>M3U / M3U8 датотека<input id="m15File" type="file" accept=".m3u,.m3u8,text/plain,audio/x-mpegurl,application/vnd.apple.mpegurl"></label></div>
+<div class="actions"><button id="m15ReadUrl" type="button" class="secondary">Прочитај URL</button><button id="m15ReadFile" type="button" class="secondary">Прочитај датотека</button></div><p id="m15Notice" class="muted" aria-live="polite"></p></div>
+<div class="panel"><h3>Преглед пред увоз</h3><div class="grid"><label>Пребарај<input id="m15Search" placeholder="Име или категорија"></label><label>Додади во ТВ-пакети (Ctrl/⌘ за повеќе)<select id="m15Packages" multiple size="5" style="min-height:125px"></select></label></div>
+<div class="panel" style="margin:12px 0"><h3>🗂 Автоматско групирање по категории</h3><p class="muted">Предлог според group-title од M3U, потоа името на каналот. За секоја група избери ТВ-пакет или „Без автоматско доделување“. Прегледај пред увоз; постојните пакети не се бришат.</p><div class="actions"><button type="button" id="m16Suggest" class="secondary">Предложи пакети автоматски</button><button type="button" id="m16Reset" class="secondary">Исчисти предлози</button></div><div id="m16Groups" class="scroll"></div><p id="m16Info" class="muted"></p></div>
+<div class="panel" style="margin:12px 0"><h3>🌍 Организација по држави</h3><p class="muted">Државата се препознава од group-title и ознаките во името. Непознатите одат во Other. Пред увоз можеш да смениш држава и група за секој канал. Пакетите се одвоени од оваа организација.</p><label style="display:flex;align-items:center;gap:8px"><input type="checkbox" id="m161CreatePackages" style="width:auto"> Создај недостасувачки ТВ-пакети според групите при увоз (по потврда)</label><p id="m161CountryInfo" class="muted"></p></div><div class="actions"><label style="display:flex;gap:8px;align-items:center"><input id="m15All" type="checkbox" style="width:auto"> Означи ги видливите</label><button id="m15Clear" type="button" class="secondary">Одштиклирај</button><button id="m15Import" type="button" class="primary">Увези означени канали</button></div>
+<div class="scroll"><table><thead><tr><th>✓</th><th>Канал</th><th>Држава</th><th>Група (може да се смени)</th><th>Статус</th></tr></thead><tbody id="m15Rows"></tbody></table></div></div></section>
+<section id="m3uSources" class="page hide"><div class="panel"><h3>↻ M3U Sources — v19.1</h3><p class="muted">Регистар на извори. Линковите можат да содржат пристапни податоци: не ги споделувај. Серверската синхронизација се активира посебно преку Edge Function и безбеден распоред; самото зачувување извор не ја стартува.</p><form id="v19Form"><div class="grid"><label>Име на извор<input id="v19Name" required maxlength="120" placeholder="Мој M3U извор"></label><label>HTTPS M3U URL<input id="v19Url" required type="url" placeholder="https://provider.example/playlist.m3u"></label><label>Интервал<select id="v19Hours"><option value="6">6 часа</option><option value="12">12 часа</option><option value="24" selected>24 часа</option></select></label></div><div class="actions"><button class="primary" type="submit">Зачувај извор</button><button type="button" id="v19Reload" class="secondary">Освежи листа</button></div></form><p class="muted" id="v19Status"></p></div><div class="panel scroll"><h3>Регистрирани извори</h3><table><thead><tr><th>Име</th><th>Интервал</th><th>Последен обид</th><th>Статус</th><th>Акции</th></tr></thead><tbody id="v19Rows"></tbody></table></div></section>
+<section id="packages" class="page hide">
+<div class="panel"><h3>📦 TV Packages — v14</h3><p class="muted">Еден канал може да припаѓа на повеќе пакети. Промените се зачувуваат во Supabase по извршување на SETUP-v13.sql.</p>
+<form id="packageForm"><div class="grid"><label>Име на пакет<input id="packageName" maxlength="120" required placeholder="Sport, Balkan, All Channels"></label><label>Опис<input id="packageDescription" maxlength="500" placeholder="Опционално"></label></div><button class="primary">Создај пакет</button></form><p id="packageNotice" class="muted"></p></div>
+<div class="panel scroll"><h3>Постојни пакети</h3><table><thead><tr><th>Пакет</th><th>Канали</th><th>Статус</th><th>Акции</th></tr></thead><tbody id="packageRows"></tbody></table></div>
+<div class="panel"><h3>🔐 Дозволени пакети за реселери</h3><p class="muted">Избери реселер, означи ги пакетите со квадратчиња и зачувај ги сите промени одеднаш. Дозволите не се пренесуваат автоматски на подреселерите.</p><label>Реселер<select id="v14GrantReseller"></select></label><div class="actions" style="margin:12px 0"><label style="display:inline-flex;align-items:center;gap:8px"><input type="checkbox" id="v141SelectAll" style="width:auto"> Избери ги сите</label><button type="button" class="secondary" id="v141ClearAll">Одштиклирај ги сите</button></div><div id="v141PackageChecks" style="display:grid;grid-template-columns:repeat(auto-fit,minmax(210px,1fr));gap:10px;margin:12px 0"></div><button type="button" class="primary" id="v141SaveGrants">Зачувај дозволи</button><p id="v141GrantInfo" class="muted"></p></div><div class="panel"><h3>📺 Додели канал во пакет</h3><form id="packageChannelForm"><div class="grid"><label>Пакет<select id="packageChannelPackage" required></select></label><label>Канал<select id="packageChannelChannel" required></select></label></div><button class="primary">Додели канал</button></form><h4>Канали во избраниот пакет</h4><div id="packageChannelRows"></div></div>
+<div class="panel"><h3>👤 Пакети на клиентска претплата</h3><p class="muted">Избери постојна претплата и додели ТВ-пакети. Потоа создај клиентски линк преку „M3U пристап“.</p><form id="packageAssignForm"><div class="grid"><label>Клиентска претплата<select id="packageAssignClient" required></select></label><label>ТВ-пакет<select id="packageAssignPackage" required></select></label></div><button class="primary">Додели пакет на клиент</button></form><h4>Доделени пакети на избраниот клиент</h4><div id="packageAssignedRows"></div></div></section>
+<section id="resellers" class="page hide"><div class="panel"><h3>Додај реселер</h3><p class="muted">Прво создади корисник во Supabase → Authentication → Users → Add user, потоа копирај го неговиот User UID. Не внесувај лозинки во овој панел.</p><form id="resellerForm"><div class="grid"><label>Име на реселер<input id="resellerName" maxlength="120" required placeholder="Reseller MK"></label><label>User UID од Supabase<input id="resellerUid" required placeholder="xxxxxxxx-xxxx-xxxx-xxxx-xxxxxxxxxxxx" pattern="[0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{4}-[0-9a-fA-F]{12}"></label><label>Почетни кредити<input id="resellerCredits" type="number" min="0" max="1000000" step="1" value="0" required></label></div><button class="primary" type="submit">Додај реселер</button></form></div><div class="panel scroll"><h3>Листа на реселери</h3><label>Пребарај реселери<input id="resellerSearch" type="search" placeholder="Име или User UID"></label><p class="muted">Кредитите се ажурираат преку серверски функции со историја на промени.</p><table><thead><tr><th>Име</th><th>User UID</th><th>Кредити</th><th>Статус</th><th>Акции</th></tr></thead><tbody id="resellerRows"></tbody></table></div></section><section id="billing" class="page hide"><div class="panel"><h3>Клиентска претплата (евиденција)</h3><p class="muted">Одзема кредити: 1 месец=1, 3=3, 6=6, 12=10. По создавање додели пакети и избери „M3U пристап“. За бесплатна проба користи Trial Management.</p><form id="adminSubscription"><label>Реселер<select id="adminSubOwner"></select></label><label>Клиент (име/ознака)<input id="adminSubLabel" required maxlength="120"></label><label>Времетраење<select id="adminSubMonths"><option value="1">1 месец — 1 кредит</option><option value="3">3 месеци — 3 кредити</option><option value="6">6 месеци — 6 кредити</option><option value="12">12 месеци — 10 кредити</option></select></label><button class="primary">Активирај запис и одземи кредити</button></form></div><div class="panel"><h3>Претплати</h3><table><thead><tr><th>Клиент</th><th>Реселер</th><th>Вкупно месеци</th><th>Истекува</th><th>Акција</th></tr></thead><tbody id="adminSubRows"></tbody></table></div></section><section id="history" class="page hide"><div class="panel scroll"><h3>Credit History — последни 200 (трансфери, претплати, продолжувања)</h3><table><thead><tr><th>Датум</th><th>Реселер</th><th>Промена</th><th>Причина</th></tr></thead><tbody id="adminLedgerRows"></tbody></table></div></section><section id="clients" class="page hide"><div class="panel"><h3>Clients Management — претплати</h3><div class="grid"><label>Реселер<select id="clientOwnerFilter"><option value="">Сите реселери</option></select></label><label>Статус<select id="clientStatusFilter"><option value="">Сите</option><option value="active">Активни</option><option value="expired">Истечени</option></select></label></div><p id="clientFilterInfo" class="muted"></p><p class="muted">Сите клиентски записи и нивните истекувања. Продолжување се врши на истиот запис. Ова не е активна IPTV линија и не чува лозинки.</p><div class="scroll"><table><thead><tr><th>Клиент</th><th>Реселер</th><th>Истекува</th><th>Статус</th><th>Акција</th></tr></thead><tbody id="adminClientRows"></tbody></table></div></div></section><section id="trials" class="page hide"><div class="panel"><h3>Тестови — Super Admin</h3><p class="muted">Твоите тестови се неограничени. Секој реселер има 100 тестови дневно (UTC); неискористените не се пренесуваат. Ова се записи за тестови, не активни IPTV линии.</p><form id="trialForm"><div class="grid"><label>За кого<select id="trialReseller"><option value="">Јас — Super Admin</option></select></label><label>Времетраење<select id="trialHours"><option value="12">12 часа</option><option value="24" selected>24 часа</option><option value="48">48 часа</option><option value="72">72 часа</option></select></label><label>Забелешка<input id="trialNote" maxlength="250" placeholder="Опционално"></label></div><button class="primary">Создај тест запис</button></form></div><div class="panel"><h3>Дозволи за реселер</h3><p class="muted">Избери реселер, дозволени часови и дополнителни тестови. Стандардно е дозволено само 24 часа.</p><label>Реселер<select id="settingsReseller"></select></label><div class="grid"><label><input type="checkbox" class="hourCheck" value="12"> 12 часа</label><label><input type="checkbox" class="hourCheck" value="24" checked> 24 часа</label><label><input type="checkbox" class="hourCheck" value="48"> 48 часа</label><label><input type="checkbox" class="hourCheck" value="72"> 72 часа</label></div><label>Дополнителни тестови (салдо)<input id="bonusTests" type="number" min="0" step="1" value="0"></label><button id="saveTrialSettings" class="primary" type="button">Зачувај дозволи</button></div><div class="panel scroll"><h3>Последни тестови</h3><table><thead><tr><th>Реселер</th><th>Часови</th><th>Создаден</th><th>Истекува</th><th>Тип</th><th>Тест URL</th></tr></thead><tbody id="trialRows"></tbody></table></div></section></main></div><section id="resellerApp" class="wrap hide"><aside><img src="logo.jpg" alt="BLiZ TV"><h3>RESELLER PORTAL</h3><p id="resellerWho" class="muted"></p><button id="resellerLogout" class="secondary">Одјави се</button></aside><main><h1>Мој реселерски панел</h1><div id="resellerNotice" class="status hide"></div><div class="grid"><div class="panel"><h2 id="myCredits">—</h2>Кредити (информативно)</div><div class="panel"><h2 id="myTrials">—</h2>Преостанати дневни тестови (UTC)</div><div class="panel"><h2 id="myBonus">—</h2>Дополнителни тестови</div></div><div class="panel"><h3>Создај бесплатен тест</h3><p class="muted">Ова не активира ТВ стрим или клиентска линија.</p><form id="myTrialForm"><label>Времетраење<select id="myTrialHours"></select></label><label>Забелешка<input id="myTrialNote" maxlength="250"></label><button class="primary">Создај бесплатен тест</button></form></div><div class="panel scroll"><h3>Мои последни тестови</h3><table><thead><tr><th>Часови</th><th>Создаден</th><th>Истекува</th><th>Тип</th><th>Тест URL</th></tr></thead><tbody id="myTrialRows"></tbody></table></div><div class="panel"><h3>Мои подреселери</h3><p class="muted">Создади корисник во Supabase Authentication, потоа внеси го UID. Нов подреселер почнува со 0 кредити и 100 тестови дневно.</p><form id="childForm"><label>Име<input id="childName" required maxlength="120"></label><label>User UID<input id="childUid" required pattern="[0-9a-fA-F-]{36}"></label><button class="primary">Додај подреселер</button></form><table><thead><tr><th>Име</th><th>Кредити</th><th>Префрли кредити</th></tr></thead><tbody id="childRows"></tbody></table></div><div class="panel"><h3>Клиентска претплата</h3><p class="muted">Претплатата одзема кредити. Потоа додели пакети и создај M3U пристап. Бесплатните тестови се создаваат одделно.</p><form id="mySubscription"><label>Клиент (име/ознака)<input id="mySubLabel" required maxlength="120"></label><label>Времетраење<select id="mySubMonths"><option value="1">1 месец — 1 кредит</option><option value="3">3 месеци — 3 кредити</option><option value="6">6 месеци — 6 кредити</option><option value="12">12 месеци — 10 кредити</option></select></label><button class="primary">Создај претплата</button></form><table><thead><tr><th>Клиент</th><th>Вкупно месеци</th><th>Истекува</th><th>Акција</th></tr></thead><tbody id="mySubRows"></tbody></table></div><div class="panel"><h3>📦 Мои дозволени ТВ-пакети</h3><p class="muted">Пакетите ги определуваат достапните канали. Цената на претплатата останува иста без разлика на бројот на пакети. По создавање претплата, избери ја од листата и додели пакети.</p><label>Клиентска претплата<select id="v14MyClient"></select></label><label>Дозволен пакет<select id="v14MyPackage"></select></label><button type="button" class="primary" id="v14AssignBtn">Додели пакет</button><div id="v14MyAssigned"></div><p class="muted" id="v14MyInfo"></p></div><div class="panel scroll"><h3>Моја Credit History — последни 100</h3><table><thead><tr><th>Датум</th><th>Промена</th><th>Причина</th></tr></thead><tbody id="myLedgerRows"></tbody></table></div></main></section>
+<script type="module">
+import {createClient} from 'https://esm.sh/@supabase/supabase-js@2';
+const sb=createClient('https://gxytdtvajhixpwtteryq.supabase.co','sb_publishable_u7NVIPpkWH8eWy2MlnojtA_wbEVN94m');
+const $=id=>document.getElementById(id); let cats=[],channels=[],resellers=[],currentReseller=null; const tables=['bliz_stream_categories','bliz_stream_channels','bliz_stream_resellers','bliz_stream_clients'];
+function message(s,bad=false,target='notice'){const el=$(target);el.textContent=s;el.classList.remove('hide');el.classList.toggle('error',bad)}
+function resetAuth(){document.getElementById('playbackCredentials')?.remove();currentReseller=null;$('app').classList.add('hide');$('resellerApp').classList.add('hide');$('auth').classList.remove('hide');$('password').value=''}
+function clearMessage(target='notice'){$(target).classList.add('hide')}
+function node(tag,text){const n=document.createElement(tag);n.textContent=text??'';return n}
+function td(tr,txt){tr.appendChild(node('td',txt))}
+async function checkAdmin(){const {data,error}=await sb.rpc('bliz_stream_is_admin');if(error)throw error;if(data!==true)throw Error('Овој профил нема Super Admin дозвола. Провери дали истиот User UID е додаден во bliz_stream_admins.');}
+async function load(){clearMessage();const result=await Promise.all(tables.map((t,i)=>sb.from(t).select('*',{count:'exact'}).limit(i===1?1:500)));for(let i=0;i<result.length;i++)if(result[i].error)throw Error(tables[i]+': '+result[i].error.message);cats=result[0].data||[];channels=result[1].data||[];resellers=result[2].data||[];await v18LoadAllChannels();['countCats','countChannels','countResellers','countClients'].forEach((id,i)=>$(id).textContent=result[i].count??0);renderCats();renderChannels();renderResellers();await loadTrials();await loadAdminSubs();await loadAdminHistory();await loadDashboardV9();await loadPackagesV13()}
+function renderCats(){const rows=$('catRows');rows.replaceChildren();cats.sort((a,b)=>a.sort_order-b.sort_order||a.name.localeCompare(b.name)).forEach(c=>{const tr=node('tr');td(tr,c.name);td(tr,c.category_type);td(tr,c.sort_order);const cell=node('td');const del=node('button','Избриши');del.className='danger';del.onclick=async()=>{if(!confirm('Да се избрише категоријата '+c.name+'? Каналите ќе останат без категорија.'))return;const {error}=await sb.from('bliz_stream_categories').delete().eq('id',c.id);if(error)message(error.message,true);else await safeLoad()};cell.append(del);tr.append(cell);rows.append(tr)});const select=$('channelCategory');select.replaceChildren(new Option('Без категорија',''));cats.forEach(c=>select.add(new Option(c.name,c.id)))}
+function renderChannels(){const rows=$('channelRows');rows.replaceChildren();channels.forEach(c=>{const tr=node('tr');td(tr,c.name);td(tr,cats.find(x=>x.id===c.category_id)?.name||'—');td(tr,c.is_active?'Активен':'Неактивен');const cell=node('td');const toggle=node('button',c.is_active?'Деактивирај':'Активирај');toggle.className='secondary';toggle.onclick=async()=>{const {error}=await sb.from('bliz_stream_channels').update({is_active:!c.is_active}).eq('id',c.id);if(error)message(error.message,true);else await safeLoad()};const del=node('button','Избриши');del.className='danger';del.onclick=async()=>{if(!confirm('Да се избрише каналот '+c.name+'?'))return;const {error}=await sb.from('bliz_stream_channels').delete().eq('id',c.id);if(error)message(error.message,true);else await safeLoad()};cell.className='actions';cell.append(toggle,del);tr.append(cell);rows.append(tr)})}
+$('resellerSearch').oninput=()=>renderResellers();
+function renderResellers(){const q=($('resellerSearch')?.value||'').trim().toLowerCase();const rows=$('resellerRows');rows.replaceChildren();resellers.filter(r=>!q||r.reseller_name.toLowerCase().includes(q)||r.user_id.toLowerCase().includes(q)).sort((a,b)=>a.reseller_name.localeCompare(b.reseller_name)).forEach(r=>{const tr=node('tr');td(tr,r.reseller_name);td(tr,r.user_id);td(tr,r.credits);td(tr,r.is_active?'Активен':'Неактивен');const cell=node('td');cell.className='actions';const credit=node('button','Промени кредити');credit.className='secondary';credit.onclick=async()=>{const v=prompt('Нов вкупен број кредити за '+r.reseller_name+':',String(r.credits));if(v===null)return;if(!/^\d+$/.test(v.trim())||Number(v)>1000000){message('Внеси цел број од 0 до 1000000.',true);return}const {error}=await sb.rpc('bliz_stream_admin_set_credits',{p_reseller:r.id,p_new_balance:Number(v)});if(error)message(error.message,true);else await safeLoad()};const toggle=node('button',r.is_active?'Деактивирај':'Активирај');toggle.className='secondary';toggle.onclick=async()=>{if(!confirm((r.is_active?'Да се деактивира ':'Да се активира ')+r.reseller_name+'?'))return;const {error}=await sb.from('bliz_stream_resellers').update({is_active:!r.is_active}).eq('id',r.id);if(error)message(error.message,true);else await safeLoad()};cell.append(credit,toggle);tr.append(cell);rows.append(tr)})}
+async function loadTrials(){
+ const sel=$('trialReseller'),cfg=$('settingsReseller'); const old=sel.value, oldCfg=cfg.value;
+ sel.replaceChildren(new Option('Јас — Super Admin',''));cfg.replaceChildren();
+ resellers.forEach(r=>{sel.add(new Option(r.reseller_name,r.id));cfg.add(new Option(r.reseller_name,r.id))});
+ sel.value=old;cfg.value=oldCfg||resellers[0]?.id||'';
+ const {data,error}=await sb.from('bliz_stream_trials').select('id,reseller_id,duration_hours,created_at,expires_at,used_bonus').order('created_at',{ascending:false}).limit(100);
+ if(error){message('Trial Management бара прво да се изврши SETUP-TRIALS.sql: '+error.message,true);return}
+ const rows=$('trialRows');rows.replaceChildren();(data||[]).forEach(t=>{const tr=node('tr');td(tr,resellers.find(r=>r.id===t.reseller_id)?.reseller_name||'Super Admin');td(tr,t.duration_hours);td(tr,new Date(t.created_at).toLocaleString());td(tr,new Date(t.expires_at).toLocaleString());td(tr,t.used_bonus?'Дополнителен':'Дневен');const access=node('td');access.append(trialPlaybackButton(t));tr.append(access);rows.append(tr)});
+ await loadTrialSettings();
+}
+async function loadTrialSettings(){const id=$('settingsReseller').value;if(!id)return;const {data,error}=await sb.from('bliz_stream_trial_settings').select('allowed_hours,bonus_tests').eq('reseller_id',id).maybeSingle();if(error){message(error.message,true);return}const allowed=data?.allowed_hours||[24];document.querySelectorAll('.hourCheck').forEach(c=>c.checked=allowed.includes(Number(c.value)));$('bonusTests').value=data?.bonus_tests??0}
+$('settingsReseller').onchange=loadTrialSettings;
+$('saveTrialSettings').onclick=async()=>{const id=$('settingsReseller').value;if(!id){message('Прво додади реселер.',true);return}const allowed=[...document.querySelectorAll('.hourCheck:checked')].map(c=>Number(c.value));const bonus=Number($('bonusTests').value);if(!allowed.length||!Number.isSafeInteger(bonus)||bonus<0){message('Избери барем едно времетраење и валиден број дополнителни тестови.',true);return}const {error}=await sb.from('bliz_stream_trial_settings').upsert({reseller_id:id,allowed_hours:allowed,daily_limit:100,bonus_tests:bonus,updated_at:new Date().toISOString()});if(error)message(error.message,true);else message('Дозволите се зачувани.')};
+$('trialForm').onsubmit=async e=>{e.preventDefault();const btn=e.target.querySelector('button');btn.disabled=true;try{const {data,error}=await sb.rpc('bliz_stream_issue_trial',{p_reseller_id:$('trialReseller').value||null,p_hours:Number($('trialHours').value),p_note:$('trialNote').value});if(error)throw error;message('Тестот е создаден. Избери ТВ-пакет за бесплатен M3U пристап.');$('trialNote').value='';await loadTrials();await openTrialPlayback(data,null)}catch(err){message(err.message,true)}finally{btn.disabled=false}};
+async function safeLoad(){try{await load()}catch(e){message(e.message,true)}}
+async function showApp(user){
+ const {data:admin,error:ae}=await sb.rpc('bliz_stream_is_admin');if(ae)throw ae;
+ if(!admin){const {data:r,error:re}=await sb.from('bliz_stream_resellers').select('id,reseller_name,credits,is_active').eq('user_id',user.id).maybeSingle();if(re)throw re;if(!r||!r.is_active)throw Error('Немаш активен реселерски профил.');currentReseller=r;$('auth').classList.add('hide');$('app').classList.add('hide');$('resellerApp').classList.remove('hide');$('resellerWho').textContent=(user.email||'')+' · '+r.reseller_name;await loadMyReseller();await loadChildrenAndSubs();return;}
+ $('resellerApp').classList.add('hide');await checkAdmin();$('who').textContent=user.email||'';$('auth').classList.add('hide');$('app').classList.remove('hide');await safeLoad()}
+
+async function loadMyReseller(){
+ const r=currentReseller;if(!r)return;
+ const {data:profile,error:pe}=await sb.from('bliz_stream_resellers').select('credits,is_active').eq('id',r.id).single();if(pe)throw pe;
+ if(!profile.is_active)throw Error('Реселерот е деактивиран.');
+ $('myCredits').textContent=profile.credits;
+ const {data:cfg,error:ce}=await sb.from('bliz_stream_trial_settings').select('allowed_hours,daily_limit,bonus_tests').eq('reseller_id',r.id).maybeSingle();if(ce)throw ce;
+ const hours=cfg?.allowed_hours||[24];$('myTrialHours').replaceChildren(...hours.sort((a,b)=>a-b).map(h=>new Option(h+' часа',String(h))));
+ const start=new Date();start.setUTCHours(0,0,0,0);const end=new Date(start.getTime()+86400000);
+ const {data:all,error:te}=await sb.from('bliz_stream_trials').select('id,duration_hours,created_at,expires_at,used_bonus').eq('reseller_id',r.id).order('created_at',{ascending:false}).limit(100);if(te)throw te;
+ const {count,error:co}=await sb.from('bliz_stream_trials').select('id',{count:'exact',head:true}).eq('reseller_id',r.id).eq('used_bonus',false).gte('created_at',start.toISOString()).lt('created_at',end.toISOString());if(co)throw co;
+ $('myTrials').textContent=Math.max(0,(cfg?.daily_limit??100)-(count??0))+' / '+(cfg?.daily_limit??100);$('myBonus').textContent=cfg?.bonus_tests??0;
+ $('myTrialRows').replaceChildren();(all||[]).forEach(t=>{const tr=node('tr');td(tr,t.duration_hours);td(tr,new Date(t.created_at).toLocaleString());td(tr,new Date(t.expires_at).toLocaleString());td(tr,t.used_bonus?'Дополнителен':'Дневен');const access=node('td');access.append(trialPlaybackButton(t));tr.append(access);$('myTrialRows').append(tr)});
+}
+$('myTrialForm').onsubmit=async e=>{e.preventDefault();const btn=e.target.querySelector('button');btn.disabled=true;try{const {data,error}=await sb.rpc('bliz_stream_issue_trial',{p_reseller_id:currentReseller.id,p_hours:Number($('myTrialHours').value),p_note:$('myTrialNote').value});if(error)throw error;message('Тестот е создаден. Избери ТВ-пакет за бесплатен M3U пристап.',false,'resellerNotice');$('myTrialNote').value='';await loadMyReseller();await loadChildrenAndSubs();await openTrialPlayback(data,null)}catch(err){message(err.message,true,'resellerNotice')}finally{btn.disabled=false}};
+
+$('login').onsubmit=async e=>{e.preventDefault();clearMessage('authMsg');const btn=e.target.querySelector('button');btn.disabled=true;try{const {data,error}=await sb.auth.signInWithPassword({email:$('email').value.trim(),password:$('password').value});if(error)throw error;await showApp(data.user)}catch(err){resetAuth();message(err.message,true,'authMsg');await sb.auth.signOut({scope:'local'})}finally{btn.disabled=false}};
+$('resellerLogout').onclick=async()=>{await sb.auth.signOut();currentReseller=null;$('resellerApp').classList.add('hide');$('auth').classList.remove('hide');$('password').value=''};
+$('logout').onclick=async()=>{await sb.auth.signOut();$('app').classList.add('hide');$('auth').classList.remove('hide');$('password').value=''};
+document.querySelectorAll('nav button').forEach(b=>b.onclick=()=>{document.querySelectorAll('nav button').forEach(x=>x.classList.remove('active'));b.classList.add('active');document.querySelectorAll('.page').forEach(x=>x.classList.add('hide'));$(b.dataset.tab).classList.remove('hide');$('heading').textContent=b.textContent.trim()});
+$('refresh').onclick=safeLoad;
+$('catForm').onsubmit=async e=>{e.preventDefault();const payload={name:$('catName').value.trim(),category_type:$('catType').value,sort_order:Number($('catSort').value)||0};if(!payload.name)return;const {error}=await sb.from('bliz_stream_categories').insert(payload);if(error)message(error.message,true);else{e.target.reset();message('Категоријата е зачувана.');await safeLoad()}};
+$('resellerForm').onsubmit=async e=>{e.preventDefault();const payload={reseller_name:$('resellerName').value.trim(),user_id:$('resellerUid').value.trim().toLowerCase(),credits:Number($('resellerCredits').value),is_active:true};if(!payload.reseller_name||!Number.isInteger(payload.credits)||payload.credits<0||payload.credits>1000000)return;if(resellers.some(r=>r.user_id===payload.user_id)){message('Овој User UID веќе е поврзан со реселер.',true);return}const {error}=await sb.from('bliz_stream_resellers').insert(payload);if(error)message('Реселерот не е додаден: '+error.message,true);else{e.target.reset();message('Реселерот е додаден.');await safeLoad()}};
+$('channelForm').onsubmit=async e=>{e.preventDefault();const payload={name:$('channelName').value.trim(),category_id:$('channelCategory').value||null,stream_url:$('channelUrl').value.trim()||null,logo_url:$('channelLogo').value.trim()||null,epg_id:$('channelEpg').value.trim()||null,is_active:$('channelActive').value==='true'};if(!payload.name)return;const {error}=await sb.from('bliz_stream_channels').insert(payload);if(error)message(error.message,true);else{e.target.reset();message('Каналот е зачуван.');await safeLoad()}};
+
+const expiryText=x=>new Date(x).toLocaleString();
+const expiryStatus=x=>new Date(x).getTime()>Date.now()?'Активна':'Истечена';
+const daysRemaining=x=>Math.ceil((new Date(x).getTime()-Date.now())/86400000);
+function expiryBadge(x){const d=daysRemaining(x);return d<0?'Истечена':d===0?'Истекува денес':d<=7?'⚠ Истекува за '+d+' д.':'Активна'}
+const reasons={transfer_in:'Примен трансфер',transfer_out:'Испратен трансфер',subscription:'Нова претплата',renewal:'Продолжување',admin_adjustment:'Админ корекција'};
+async function renewSubscription(sub, isAdmin=false){
+ const monthsText=prompt('Продолжи '+sub.client_label+' за колку месеци? Внеси 1, 3, 6 или 12:','1');
+ if(monthsText===null)return;
+ if(!['1','3','6','12'].includes(monthsText.trim())){message('Дозволени се 1, 3, 6 или 12 месеци.',true,isAdmin?'notice':'resellerNotice');return}
+ const months=Number(monthsText.trim()),cost=months===12?10:months;
+ if(!confirm('Продолжување за '+months+' месеци ќе одземе '+cost+' кредити. Да продолжам?'))return;
+ const {data,error}=await sb.rpc('bliz_stream_renew_subscription',{p_subscription:sub.id,p_months:months});
+ if(error){message(error.message,true,isAdmin?'notice':'resellerNotice');return}
+ message('Успешно продолжено. Нов датум на истекување: '+expiryText(data),false,isAdmin?'notice':'resellerNotice');
+ if(isAdmin)await safeLoad();else{await loadMyReseller();await loadChildrenAndSubs()}
+}
+function renewButton(sub,admin){const b=node('button','Продолжи');b.className='secondary';b.onclick=()=>renewSubscription(sub,admin);return b}
+let dashClients=[];
+function renderDashClients(){
+ const matches=dashClients;
+ const rows=$('dashClientRows');rows.replaceChildren();matches.slice(0,100).forEach(x=>{const tr=node('tr');const r=resellers.find(y=>y.id===x.reseller_id);td(tr,x.client_label);td(tr,r?.reseller_name||'—');td(tr,x.duration_months);td(tr,expiryText(x.expires_at));td(tr,expiryBadge(x.expires_at));rows.append(tr)});
+ $('dashSearchInfo').textContent=matches.length+' пронајдени'+(matches.length>100?' — прикажани првите 100':'')+' (пребарување во последните 500 претплати).';
+}
+
+// v11: global lookup uses only data the signed-in administrator is already authorized to read.
+// Client search is limited to the latest 500 loaded subscriptions; never expose credentials.
+function hierarchy(r){const path=[],seen=new Set();let current=r;while(current&&!seen.has(current.id)){seen.add(current.id);path.unshift(current);current=resellers.find(x=>x.id===current.parent_reseller_id)}return path}
+function globalMatches(){const q=$('globalSearch').value.trim().toLocaleLowerCase();if(!q)return[];return [...resellers.filter(r=>r.reseller_name.toLocaleLowerCase().includes(q)||r.user_id.toLocaleLowerCase().includes(q)).map(r=>({kind:'reseller',value:r})),...dashClients.filter(c=>c.client_label.toLocaleLowerCase().includes(q)).map(c=>({kind:'client',value:c}))].slice(0,100)}
+function renderGlobalSearch(){const box=$('globalSearchResults');box.replaceChildren();$('globalSearchDetail').classList.add('hide');$('globalSearchDetail').replaceChildren();const q=$('globalSearch').value.trim();if(!q){$('globalSearchInfo').textContent='Внеси име за пребарување низ мрежата.';return}const hits=globalMatches();$('globalSearchInfo').textContent=hits.length+' резултати (клиентите се пребаруваат во последните 500 претплати).';for(const hit of hits){const r=hit.kind==='reseller'?hit.value:resellers.find(x=>x.id===hit.value.reseller_id);const label=hit.kind==='client'?'Клиент':hit.value.parent_reseller_id?'Подреселер':'Реселер';const b=node('button');b.className='search-result';b.append(document.createTextNode((hit.value.reseller_name||hit.value.client_label)+' · '+label));const sm=node('small','Под кого: '+(hit.kind==='client'?(r?.reseller_name||'—'):(resellers.find(x=>x.id===hit.value.parent_reseller_id)?.reseller_name||'Super Admin')));b.append(sm);b.onclick=()=>showGlobalDetail(hit);box.append(b)}}
+function showGlobalDetail(hit){const box=$('globalSearchDetail');box.replaceChildren();box.classList.remove('hide');const item=hit.value;const r=hit.kind==='reseller'?item:resellers.find(x=>x.id===item.reseller_id);const card=node('div');card.className='detail-card';const h=node('h3',hit.kind==='client'?'Клиент: '+item.client_label:'Реселер: '+item.reseller_name);card.append(h);const grid=node('div');grid.className='detail-grid';function field(k,v){const d=node('div');const label=node('small',k);const val=node('div',String(v));d.append(label,val);grid.append(d)}if(hit.kind==='client'){field('Улога','Клиент');field('Под реселер',r?.reseller_name||'—');field('Купени месеци',item.duration_months);field('Истекува',expiryText(item.expires_at));field('Статус',expiryBadge(item.expires_at));field('Преостанати денови',Math.max(0,daysRemaining(item.expires_at)));field('ID на запис',item.id||'—');field('ТВ-пакети',v13Assignments.filter(a=>a.subscription_id===item.id).map(a=>v13Packages.find(p=>p.id===a.package_id)?.name).filter(Boolean).join(', ')||'Нема доделени')}else{const direct=resellers.filter(x=>x.parent_reseller_id===r.id);const descendants=resellers.filter(x=>hierarchy(x).some(p=>p.id===r.id)&&x.id!==r.id);field('Улога',r.parent_reseller_id?'Подреселер':'Реселер');field('Родител',resellers.find(x=>x.id===r.parent_reseller_id)?.reseller_name||'Super Admin');field('Кредити',r.credits);field('Статус',r.is_active?'Активен':'Неактивен');field('Директни подреселери',direct.length);field('Мрежа (подреселери)',descendants.length);field('Клиенти во вчитани записи',dashClients.filter(c=>c.reseller_id===r.id).length);field('Активни клиенти',dashClients.filter(c=>c.reseller_id===r.id&&daysRemaining(c.expires_at)>=0).length);const trail=node('div');trail.className='tree-line';trail.textContent='Хиерархија: Super Admin → '+hierarchy(r).map(x=>x.reseller_name).join(' → ');card.append(grid,trail);const network=node('div');network.className='tree-line';network.textContent='Подреселери: '+(descendants.map(x=>x.reseller_name).join(', ')||'Нема');card.append(network);const members=node('div');members.className='tree-line';const title=node('h4','Клиенти на реселерот (последни 500 вчитани претплати)');members.append(title);const mine=dashClients.filter(c=>c.reseller_id===r.id);if(!mine.length)members.append(node('p','Нема вчитани клиентски записи.'));for(const c of mine.slice(0,50)){const b=node('button',c.client_label+' · '+expiryBadge(c.expires_at)+' · '+expiryText(c.expires_at));b.className='search-result';b.onclick=()=>showGlobalDetail({kind:'client',value:c});members.append(b)}card.append(members)}if(hit.kind==='client')card.append(grid);const close=node('button','Затвори детали');close.className='secondary';close.onclick=()=>box.classList.add('hide');card.append(close);box.append(card)}
+$('globalSearch').addEventListener('input',renderGlobalSearch);
+async function loadDashboardV9(){
+ const now=new Date(),start=new Date(now);start.setUTCHours(0,0,0,0);const end=new Date(start.getTime()+86400000);
+ const requests=await Promise.all([
+  sb.from('bliz_stream_subscriptions').select('id',{count:'exact',head:true}).gt('expires_at',now.toISOString()),
+  sb.from('bliz_stream_subscriptions').select('id',{count:'exact',head:true}).lte('expires_at',now.toISOString()),
+  sb.from('bliz_stream_trials').select('id',{count:'exact',head:true}).gte('created_at',start.toISOString()).lt('created_at',end.toISOString()),
+  sb.from('bliz_stream_subscriptions').select('client_label,reseller_id,duration_months,expires_at').order('created_at',{ascending:false}).limit(500)
+ ]);
+ for(const result of requests)if(result.error)throw result.error;
+ $('dashActiveClients').textContent=requests[0].count??0;
+ $('dashExpiredClients').textContent=requests[1].count??0;
+ $('dashTrialsToday').textContent=requests[2].count??0;
+ $('dashCredits').textContent=resellers.reduce((n,r)=>n+Number(r.credits||0),0).toLocaleString();
+ dashClients=requests[3].data||[];for(const [id,n] of [['exp1',1],['exp3',3],['exp7',7]])$(id).textContent=dashClients.filter(c=>daysRemaining(c.expires_at)>=0&&daysRemaining(c.expires_at)<=n).length;renderDashClients();renderGlobalSearch();
+ const rows=$('dashResellerRows');rows.replaceChildren();resellers.forEach(r=>{const tr=node('tr');td(tr,r.reseller_name);td(tr,resellers.find(x=>x.id===r.parent_reseller_id)?.reseller_name||'Super Admin');td(tr,r.credits);td(tr,r.is_active?'Активен':'Неактивен');rows.append(tr)});
+}
+async function loadAdminHistory(){
+ const {data,error}=await sb.from('bliz_stream_credit_ledger').select('created_at,reseller_id,delta,reason').order('created_at',{ascending:false}).limit(200);
+ if(error)throw error;
+ const rows=$('adminLedgerRows');rows.replaceChildren();(data||[]).forEach(x=>{const tr=node('tr');td(tr,expiryText(x.created_at));td(tr,resellers.find(r=>r.id===x.reseller_id)?.reseller_name||x.reseller_id);td(tr,x.delta>0?'+'+x.delta:x.delta);td(tr,reasons[x.reason]||x.reason);rows.append(tr)});
+}
+async function loadMyHistory(){
+ const {data,error}=await sb.from('bliz_stream_credit_ledger').select('created_at,delta,reason').eq('reseller_id',currentReseller.id).order('created_at',{ascending:false}).limit(100);
+ if(error)throw error;
+ const rows=$('myLedgerRows');rows.replaceChildren();(data||[]).forEach(x=>{const tr=node('tr');td(tr,expiryText(x.created_at));td(tr,x.delta>0?'+'+x.delta:x.delta);td(tr,reasons[x.reason]||x.reason);rows.append(tr)});
+}
+let adminClientCache=[];
+function renderAdminClientFilters(){
+ const q="", owner=$('clientOwnerFilter').value, status=$('clientStatusFilter').value;
+ const rows=$('adminSubRows'),clients=$('adminClientRows');rows.replaceChildren();clients.replaceChildren();
+ const filtered=adminClientCache.filter(x=>{
+  const active=new Date(x.expires_at)>new Date();
+  return (!q||x.client_label.toLocaleLowerCase().includes(q))&&(!owner||x.reseller_id===owner)&&(!status||(status==='active'?active:!active));
+ });
+ filtered.forEach(x=>{
+  const name=resellers.find(r=>r.id===x.reseller_id)?.reseller_name||x.reseller_id;
+  const tr=node('tr');td(tr,x.client_label);td(tr,name);td(tr,x.duration_months);td(tr,expiryText(x.expires_at));const cell=node('td');cell.append(renewButton(x,true),playbackButton(x));tr.append(cell);rows.append(tr);
+  const cr=node('tr');td(cr,x.client_label);td(cr,name);td(cr,expiryText(x.expires_at));td(cr,expiryBadge(x.expires_at));const action=node('td');action.append(renewButton(x,true),playbackButton(x));cr.append(action);clients.append(cr);
+ });
+ $('clientFilterInfo').textContent=`Прикажани ${filtered.length} од ${adminClientCache.length} вчитани записи (последни 500).`;
+}
+async function loadAdminSubs(){
+ const owner=$('adminSubOwner'),old=owner.value;owner.replaceChildren(...resellers.map(r=>new Option(r.reseller_name,r.id)));if(old)owner.value=old;
+ const filter=$('clientOwnerFilter'),oldFilter=filter.value;filter.replaceChildren(new Option('Сите реселери',''),...resellers.map(r=>new Option(r.reseller_name,r.id)));filter.value=oldFilter;
+ const {data,error}=await sb.from('bliz_stream_subscriptions').select('id,client_label,reseller_id,duration_months,expires_at').order('created_at',{ascending:false}).limit(500);
+ if(error)throw error;
+ adminClientCache=data||[];renderAdminClientFilters();
+}
+['clientOwnerFilter','clientStatusFilter'].forEach(id=>$(id).addEventListener('input',renderAdminClientFilters));
+
+$('adminSubscription').onsubmit=async e=>{e.preventDefault();const {error}=await sb.rpc('bliz_stream_create_subscription',{p_reseller:$('adminSubOwner').value,p_label:$('adminSubLabel').value,p_months:Number($('adminSubMonths').value)});if(error)message(error.message,true);else{message('Претплатата е евидентирана и кредитите се одземени.');$('adminSubLabel').value='';await safeLoad()}};
+async function loadChildrenAndSubs(){
+ if(!currentReseller)return;
+ const {data:children,error}=await sb.from('bliz_stream_resellers').select('id,reseller_name,credits,parent_reseller_id').eq('parent_reseller_id',currentReseller.id).order('reseller_name');if(error)throw error;
+ const rows=$('childRows');rows.replaceChildren();(children||[]).forEach(c=>{const tr=node('tr');td(tr,c.reseller_name);td(tr,c.credits);const cell=node('td');const b=node('button','Префрли');b.className='secondary';b.onclick=async()=>{const v=prompt('Колку кредити да се префрлат на '+c.reseller_name+'?');if(v===null)return;const amount=Number(v);if(!Number.isSafeInteger(amount)||amount<=0){message('Внеси позитивен цел број.',true,'resellerNotice');return}const {error}=await sb.rpc('bliz_stream_transfer_credits',{p_from:currentReseller.id,p_to:c.id,p_amount:amount});if(error)message(error.message,true,'resellerNotice');else{message('Кредитите се префрлени.',false,'resellerNotice');await loadMyReseller();await loadChildrenAndSubs()}};cell.append(b);tr.append(cell);rows.append(tr)});
+ const {data:subs,error:se}=await sb.from('bliz_stream_subscriptions').select('id,client_label,duration_months,expires_at').eq('reseller_id',currentReseller.id).order('created_at',{ascending:false}).limit(100);if(se)throw se;
+ const sr=$('mySubRows');sr.replaceChildren();(subs||[]).forEach(x=>{const tr=node('tr');td(tr,x.client_label);td(tr,x.duration_months);td(tr,expiryText(x.expires_at));const cell=node('td');cell.append(renewButton(x,false),playbackButton(x));tr.append(cell);sr.append(tr)});await loadMyHistory();await loadV14ResellerPackages();
+}
+$('childForm').onsubmit=async e=>{e.preventDefault();const {error}=await sb.rpc('bliz_stream_create_child',{p_parent:currentReseller.id,p_user:$('childUid').value.trim(),p_name:$('childName').value.trim()});if(error)message(error.message,true,'resellerNotice');else{message('Подреселерот е создаден.',false,'resellerNotice');e.target.reset();await loadChildrenAndSubs()}};
+$('mySubscription').onsubmit=async e=>{e.preventDefault();const {error}=await sb.rpc('bliz_stream_create_subscription',{p_reseller:currentReseller.id,p_label:$('mySubLabel').value.trim(),p_months:Number($('mySubMonths').value)});if(error)message(error.message,true,'resellerNotice');else{message('Претплатата е евидентирана и кредитите се одземени.',false,'resellerNotice');$('mySubLabel').value='';await loadMyReseller();await loadChildrenAndSubs()}};
+
+
+// v13: package catalog; server-side RLS limits writes to Super Admin.
+let v13Packages=[],v13Members=[],v13Assignments=[],v13Subs=[];
+const v13Status=t=>{const el=$('packageNotice');if(el)el.textContent=t};
+function v13Fill(id,items,placeholder){const el=$(id);if(!el)return;const previous=el.value;el.replaceChildren();if(!items.length)el.add(new Option(placeholder||'Нема записи',''));for(const [name,value] of items)el.add(new Option(name,value));if(items.some(x=>String(x[1])===previous))el.value=previous;}
+async function loadPackagesV13(){
+ const reqs=await Promise.all([
+ sb.from('bliz_stream_packages').select('id,name,description,is_active').order('name').limit(500),
+ sb.from('bliz_stream_package_channels').select('package_id,channel_id').limit(5000),
+ sb.from('bliz_stream_subscription_packages').select('subscription_id,package_id').limit(5000),
+ sb.from('bliz_stream_subscriptions').select('id,client_label,reseller_id,expires_at').order('created_at',{ascending:false}).limit(500)
+ ]);
+ if(reqs.some(x=>x.error)){v13Status('За TV Packages прво изврши SETUP-v13.sql во новиот Supabase проект. '+reqs.find(x=>x.error)?.error?.message);return}
+ [v13Packages,v13Members,v13Assignments,v13Subs]=reqs.map(x=>x.data||[]);
+ v13Fill('packageChannelPackage',v13Packages.map(x=>[x.name,x.id]),'Прво создај пакет');
+ v13Fill('packageAssignPackage',v13Packages.filter(x=>x.is_active).map(x=>[x.name,x.id]),'Нема активни пакети');
+ v13Fill('packageChannelChannel',channels.map(x=>[x.name,x.id]),'Нема канали');
+ v13Fill('packageAssignClient',v13Subs.map(x=>[x.client_label+' · '+(resellers.find(r=>r.id===x.reseller_id)?.reseller_name||'—'),x.id]),'Нема претплати');
+ const rows=$('packageRows');rows.replaceChildren();
+ for(const pkg of v13Packages){const tr=node('tr');td(tr,pkg.name);td(tr,v13Members.filter(x=>x.package_id===pkg.id).length);td(tr,pkg.is_active?'Активен':'Неактивен');const cell=node('td');cell.className='actions';const toggle=node('button',pkg.is_active?'Деактивирај':'Активирај');toggle.className='secondary';toggle.onclick=async()=>{const {error}=await sb.from('bliz_stream_packages').update({is_active:!pkg.is_active}).eq('id',pkg.id);if(error)v13Status(error.message);else await loadPackagesV13()};const del=node('button','Избриши');del.className='danger';del.onclick=async()=>{if(!confirm('Да се избрише пакетот '+pkg.name+' и неговите доделувања?'))return;const {error}=await sb.from('bliz_stream_packages').delete().eq('id',pkg.id);if(error)v13Status(error.message);else await loadPackagesV13()};cell.append(toggle,del);tr.append(cell);rows.append(tr)}
+ renderV13PackageChannels();renderV13Assigned();await loadV14Grants();v13Status('Пакети: '+v13Packages.length+' · Поврзувања со канали: '+v13Members.length);
+}
+function renderV13PackageChannels(){const box=$('packageChannelRows');box.replaceChildren();for(const item of v13Members.filter(x=>x.package_id===$('packageChannelPackage').value)){const r=node('div');r.className='actions';const ch=channels.find(x=>x.id===item.channel_id);r.append(node('span',ch?.name||'Непознат канал'));const b=node('button','Отстрани');b.className='secondary';b.onclick=async()=>{const {error}=await sb.from('bliz_stream_package_channels').delete().eq('package_id',item.package_id).eq('channel_id',item.channel_id);if(error)v13Status(error.message);else await loadPackagesV13()};r.append(b);box.append(r)}if(!box.children.length)box.append(node('p','Нема канали во овој пакет.'))}
+function renderV13Assigned(){const box=$('packageAssignedRows');box.replaceChildren();for(const item of v13Assignments.filter(x=>x.subscription_id===$('packageAssignClient').value)){const r=node('div');r.className='actions';r.append(node('span',v13Packages.find(x=>x.id===item.package_id)?.name||'Непознат пакет'));const b=node('button','Отстрани');b.className='secondary';b.onclick=async()=>{const {error}=await sb.from('bliz_stream_subscription_packages').delete().eq('subscription_id',item.subscription_id).eq('package_id',item.package_id);if(error)v13Status(error.message);else await loadPackagesV13()};r.append(b);box.append(r)}if(!box.children.length)box.append(node('p','Нема доделени пакети.'))}
+$('packageChannelPackage').onchange=renderV13PackageChannels;
+$('packageAssignClient').onchange=renderV13Assigned;
+$('packageForm').onsubmit=async e=>{e.preventDefault();const name=$('packageName').value.trim();if(!name)return;const {error}=await sb.from('bliz_stream_packages').insert({name,description:$('packageDescription').value.trim()||null});if(error)v13Status(error.message);else{$('packageForm').reset();await loadPackagesV13()}};
+$('packageChannelForm').onsubmit=async e=>{e.preventDefault();const package_id=$('packageChannelPackage').value,channel_id=$('packageChannelChannel').value;if(!package_id||!channel_id)return;const {error}=await sb.from('bliz_stream_package_channels').upsert({package_id,channel_id},{onConflict:'package_id,channel_id',ignoreDuplicates:true});if(error)v13Status(error.message);else await loadPackagesV13()};
+$('packageAssignForm').onsubmit=async e=>{e.preventDefault();const subscription_id=$('packageAssignClient').value,package_id=$('packageAssignPackage').value;if(!subscription_id||!package_id)return;const {error}=await sb.from('bliz_stream_subscription_packages').upsert({subscription_id,package_id},{onConflict:'subscription_id,package_id',ignoreDuplicates:true});if(error)v13Status(error.message);else await loadPackagesV13()};
+
+sb.auth.onAuthStateChange(event=>{if(event==='SIGNED_OUT')resetAuth()});
+(async()=>{try{const {data,error}=await sb.auth.getSession();if(error)throw error;if(data.session)await showApp(data.session.user)}catch(e){resetAuth();message(e.message,true,'authMsg');await sb.auth.signOut({scope:'local'})}})();
+
+// v14: package permissions and scoped assignments, enforced by SQL RPCs.
+let v14Grants=[],v14Allowed=[],v14Mine=[];
+async function loadV14Grants(){
+ const {data,error}=await sb.from('bliz_stream_reseller_packages').select('reseller_id,package_id').limit(5000);
+ if(error){v13Status('Не можам да ги вчитам дозволите: '+error.message);return}
+ v14Grants=data||[];
+ const rr=$('v14GrantReseller'),rid=rr.value;
+ rr.replaceChildren(...resellers.map(r=>new Option(r.reseller_name,r.id)));
+ if(rid&&resellers.some(r=>r.id===rid))rr.value=rid;
+ renderV14Grants();
+}
+function v141UpdateAll(){
+ const checks=[...document.querySelectorAll('.v141-package-check')];
+ $('v141SelectAll').checked=checks.length>0&&checks.every(c=>c.checked);
+ $('v141SelectAll').indeterminate=checks.some(c=>c.checked)&&!checks.every(c=>c.checked);
+ $('v141GrantInfo').textContent=checks.filter(c=>c.checked).length+' од '+checks.length+' пакети избрани.';
+}
+function renderV14Grants(){
+ const box=$('v141PackageChecks'),r=$('v14GrantReseller').value;
+ box.replaceChildren();
+ const granted=new Set(v14Grants.filter(x=>x.reseller_id===r).map(x=>x.package_id));
+ for(const pkg of v13Packages){
+  const label=node('label');label.style.cssText='display:flex;align-items:center;gap:9px;padding:10px;border:1px solid #56617855;border-radius:8px;cursor:pointer';
+  const cb=document.createElement('input');cb.type='checkbox';cb.className='v141-package-check';cb.value=pkg.id;cb.checked=granted.has(pkg.id);cb.disabled=!pkg.is_active&&!cb.checked;cb.style.width='auto';cb.onchange=v141UpdateAll;
+  const title=node('span',pkg.name+(pkg.is_active?'':' (неактивен)'));label.append(cb,title);box.append(label);
+ }
+ if(!v13Packages.length)box.append(node('p','Нема создадени пакети.'));
+ v141UpdateAll();
+}
+$('v14GrantReseller').onchange=renderV14Grants;
+$('v141SelectAll').onchange=e=>{document.querySelectorAll('.v141-package-check:not(:disabled)').forEach(c=>c.checked=e.target.checked);v141UpdateAll()};
+$('v141ClearAll').onclick=()=>{document.querySelectorAll('.v141-package-check').forEach(c=>c.checked=false);v141UpdateAll()};
+$('v141SaveGrants').onclick=async()=>{
+ const r=$('v14GrantReseller').value;if(!r){v13Status('Избери реселер.');return}
+ const btn=$('v141SaveGrants');btn.disabled=true;
+ const selected=new Set([...document.querySelectorAll('.v141-package-check:checked')].map(c=>c.value));
+ const old=new Set(v14Grants.filter(x=>x.reseller_id===r).map(x=>x.package_id));
+ const changes=[...selected].filter(p=>!old.has(p)).map(p=>[p,true]).concat([...old].filter(p=>!selected.has(p)).map(p=>[p,false]));
+ let done=0;
+ try{
+  for(const [p,allow] of changes){
+   const {error}=await sb.rpc('bliz_stream_admin_set_package_permission',{p_reseller:r,p_package:p,p_allow:allow});
+   if(error)throw Error('Зачувани '+done+' од '+changes.length+'. '+error.message);
+   done++;
+  }
+  v13Status(changes.length?'Успешно зачувани '+done+' промени за '+($('v14GrantReseller').selectedOptions[0]?.textContent||'реселер')+'.':'Нема нови промени.');
+ }catch(e){v13Status('Грешка: '+e.message)}finally{await loadV14Grants();btn.disabled=false}
+};
+async function loadV14ResellerPackages(){if(!currentReseller)return;
+ const [g,subs]=await Promise.all([
+  sb.from('bliz_stream_reseller_packages').select('package_id').eq('reseller_id',currentReseller.id).limit(500),
+  sb.from('bliz_stream_subscriptions').select('id,client_label').eq('reseller_id',currentReseller.id).order('created_at',{ascending:false}).limit(500)
+ ]);
+ const info=$('v14MyInfo');if(g.error||subs.error){info.textContent='Изврши SETUP-v14.sql: '+(g.error||subs.error).message;return}
+ v14Allowed=g.data||[];v14Mine=subs.data||[];
+ const [pkg,ass]=await Promise.all([
+  sb.from('bliz_stream_packages').select('id,name,is_active').eq('is_active',true).limit(500),
+  sb.from('bliz_stream_subscription_packages').select('subscription_id,package_id').in('subscription_id',v14Mine.length?v14Mine.map(x=>x.id):['00000000-0000-0000-0000-000000000000']).limit(5000)
+ ]);
+ if(pkg.error||ass.error){info.textContent=(pkg.error||ass.error).message;return}
+ const oldC=$('v14MyClient').value,oldP=$('v14MyPackage').value;
+ $('v14MyClient').replaceChildren(...v14Mine.map(x=>new Option(x.client_label,x.id)));
+ $('v14MyPackage').replaceChildren(...(pkg.data||[]).filter(x=>v14Allowed.some(a=>a.package_id===x.id)).map(x=>new Option(x.name,x.id)));
+ if(oldC)$('v14MyClient').value=oldC;if(oldP)$('v14MyPackage').value=oldP;
+ v14MyAssignments=ass.data||[];v14PackageNames=pkg.data||[];renderV14Mine();info.textContent='Дозволени пакети: '+v14Allowed.length+' · Цената на претплатата не се менува.';
+}
+let v14MyAssignments=[],v14PackageNames=[];
+function renderV14Mine(){const box=$('v14MyAssigned');box.replaceChildren();for(const x of v14MyAssignments.filter(a=>a.subscription_id===$('v14MyClient').value)){
+ const line=node('div');line.className='actions';line.append(node('span',v14PackageNames.find(p=>p.id===x.package_id)?.name||x.package_id));
+ const b=node('button','Отстрани');b.className='secondary';b.onclick=async()=>{const {error}=await sb.rpc('bliz_stream_set_subscription_package',{p_subscription:x.subscription_id,p_package:x.package_id,p_assign:false});if(error)message(error.message,true,'resellerNotice');else await loadV14ResellerPackages()};line.append(b);box.append(line)
+ }if(!box.children.length)box.append(node('p','Нема доделени пакети на овој клиент.'));
+}
+$('v14MyClient').onchange=renderV14Mine;
+$('v14AssignBtn').onclick=async()=>{const sub=$('v14MyClient').value,pkg=$('v14MyPackage').value;if(!sub||!pkg){message('Избери клиент и дозволен пакет.',true,'resellerNotice');return}const {error}=await sb.rpc('bliz_stream_set_subscription_package',{p_subscription:sub,p_package:pkg,p_assign:true});if(error)message(error.message,true,'resellerNotice');else await loadV14ResellerPackages()};
+
+// v15 M3U preview and import. All database writes use existing admin-only RLS.
+
+// v19 source registry. The browser does not run background sync.
+async function v19Load(){
+ const {data,error}=await sb.from('bliz_stream_m3u_sources').select('id,name,interval_hours,last_synced_at,last_status,is_active').order('created_at',{ascending:false});
+ const rows=$('v19Rows');rows.replaceChildren();if(error){$('v19Status').textContent='Потребен е SETUP-v19.sql: '+error.message;return}
+ $('v19Status').textContent='Извори: '+(data||[]).length+'. Автоматскиот sync се активира одделно на сервер.';
+ for(const x of data||[]){const tr=node('tr');td(tr,x.name);td(tr,x.interval_hours+' ч.');td(tr,x.last_synced_at?new Date(x.last_synced_at).toLocaleString():'—');td(tr,x.last_status||'Не е синхронизиран');const cell=node('td');const open=node('button','Прочитај во M3U Import');open.className='secondary';open.onclick=async()=>{const {data:d,error:e}=await sb.rpc('bliz_stream_m3u_source_url',{p_source_id:x.id});if(e){$('v19Status').textContent=e.message;return}$('m15Url').value=d;document.querySelector('[data-tab="m3uImport"]').click();$('m15ReadUrl').click()};const toggle=node('button',x.is_active?'Паузирај':'Активирај');toggle.className='secondary';toggle.onclick=async()=>{const {error:e}=await sb.from('bliz_stream_m3u_sources').update({is_active:!x.is_active}).eq('id',x.id);if(e)$('v19Status').textContent=e.message;else await v19Load()};cell.append(open,toggle);tr.append(cell);rows.append(tr)}
+}
+$('v19Form').onsubmit=async e=>{e.preventDefault();const url=$('v19Url').value.trim();if(!/^https:\/\//i.test(url)){ $('v19Status').textContent='Користи HTTPS URL.';return}const {error}=await sb.from('bliz_stream_m3u_sources').insert({name:$('v19Name').value.trim(),source_url:url,interval_hours:Number($('v19Hours').value)});if(error)$('v19Status').textContent=error.message;else{$('v19Form').reset();await v19Load()}};
+$('v19Reload').onclick=v19Load;
+document.querySelector('[data-tab="m3uSources"]').addEventListener('click',()=>v19Load());
+
+let m15Entries=[],m15Selected=new Set();
+const m15Msg=(msg,bad=false)=>{const e=$('m15Notice');e.textContent=msg;e.style.color=bad?'#ffaaa8':'#a7d5d3'};
+function m15Parse(raw){
+ const lines=raw.replace(/^\uFEFF/,'').split(/\r?\n/),out=[];let meta=null;
+ const attr=(line,key)=>{const match=line.match(new RegExp('(?:^|\\s)'+key+'\\s*=\\s*(["\\\'])(.*?)\\1','i'));return match?.[2]||''};
+ for(const original of lines){const line=original.trim();if(!line)continue;
+  if(/^#EXTINF:/i.test(line)){
+   const comma=line.lastIndexOf(',');meta={name:comma>=0?line.slice(comma+1).trim():'',logo:attr(line,'tvg-logo'),epg:attr(line,'tvg-id'),group:attr(line,'group-title')};
+  }else if(line[0]!=='#'&&meta){
+   if(/^https?:\/\//i.test(line)){
+    const name=(meta.name||meta.epg||'').slice(0,150);if(name)out.push({...meta,name,url:line});
+   }meta=null;
+  }
+ }
+ return out;
+}
+function m15Key(x){return (x.url||'').trim().toLowerCase()}
+// v16: group-based suggestions are preview-only until Import is confirmed.
+let m16Assignments=new Map();
+const m161Countries={CZ:'🇨🇿 Czech Republic',SK:'🇸🇰 Slovakia',MK:'🇲🇰 Macedonia',RS:'🇷🇸 Serbia',HR:'🇭🇷 Croatia',BA:'🇧🇦 Bosnia',ME:'🇲🇪 Montenegro',SI:'🇸🇮 Slovenia',BG:'🇧🇬 Bulgaria',AL:'🇦🇱 Albania',DE:'🇩🇪 Germany',IT:'🇮🇹 Italy',PL:'🇵🇱 Poland',AT:'🇦🇹 Austria',HU:'🇭🇺 Hungary',FR:'🇫🇷 France',GB:'🇬🇧 United Kingdom',US:'🇺🇸 USA',OTHER:'🌍 Other / Unknown'};
+function m161DetectCountry(x){
+ const raw=(x.group||'')+' '+(x.name||'');const t=raw.toUpperCase();
+ const match=t.match(/(?:^|[\s\[\]\(\)\|:_\-])(?:CZ|SK|MK|RS|SRB|HR|BA|BIH|ME|MNE|SI|SLO|BG|AL|DE|GER|IT|PL|AT|HU|FR|UK|GB|US|USA)(?=$|[\s\[\]\(\)\|:_\-])/);
+ const aliases={SRB:'RS',BIH:'BA',MNE:'ME',SLO:'SI',GER:'DE',UK:'GB',USA:'US'};
+ if(match)return aliases[match[0].trim()]||match[0].trim();
+ const names=[['CZ',/czech|cesk|česk/i],['SK',/slovak|slovensk/i],['MK',/macedon|makedon/i],['RS',/serbia|srbija|srpsk/i],['HR',/croat|hrvatsk/i],['BA',/bosnia|bosna|bosansk/i],['ME',/montenegro|crna gora/i],['SI',/slovenia|slovenij/i],['BG',/bulgar/i],['AL',/alban/i],['DE',/german|deutsch/i],['IT',/italia/i],['PL',/poland|polsk/i]];
+ return names.find(([_,rx])=>rx.test(raw))?.[0]||'OTHER';
+}
+function m161Country(x){return x.countryOverride||m161DetectCountry(x)}
+function m161Group(x){return x.groupOverride||m16Group(x)}
+function m161Category(x){return m161Country(x)+' / '+m161Group(x)}
+function m161SelectCountry(x){const sel=document.createElement('select');sel.style.minWidth='140px';Object.entries(m161Countries).forEach(([k,v])=>sel.add(new Option(v,k)));sel.value=m161Country(x);sel.onchange=()=>{x.countryOverride=sel.value;m16Render();m161UpdateInfo()};return sel}
+function m161UpdateInfo(){const counts={};m15Entries.forEach(x=>{const c=m161Country(x);counts[c]=(counts[c]||0)+1});$('m161CountryInfo').textContent=Object.entries(counts).map(([k,v])=>k+': '+v).join(' · ')}
+
+const m16Norm=x=>(x||'').toLocaleLowerCase().normalize('NFD').replace(/[\u0300-\u036f]/g,'').trim();
+function m16Group(x){
+ if(x.group?.trim())return x.group.trim().slice(0,120);
+ const n=m16Norm(x.name);
+ if(/sport|arena|espn|eurosport|football|fudbal|soccer|nba|sky sports/.test(n))return 'Sport';
+ if(/movie|cinema|film|hbo|cinemax/.test(n))return 'Movies';
+ if(/kids|cartoon|junior|nickelodeon|disney/.test(n))return 'Kids';
+ if(/documentary|discovery|national geographic|history|animal planet/.test(n))return 'Documentary';
+ if(/balkan|mkd|srb|hrv|bosna|makedon|serbi|croat/.test(n))return 'Balkan';
+ return 'Other';
+}
+function m16Render(){
+ const el=$('m16Groups');el.replaceChildren();const groups=new Map();
+ m15Entries.forEach((x,i)=>{const g=m161Category(x);if(!groups.has(g))groups.set(g,[]);groups.get(g).push(i)});
+ if(!groups.size){$('m16Info').textContent='Прво прочитај M3U листа.';return}
+ const table=node('table'),head=node('thead'),hr=node('tr');['✓','Категорија','Канали','Додели во ТВ-пакет'].forEach(t=>{const th=node('th');th.textContent=t;hr.append(th)});head.append(hr);table.append(head);const body=node('tbody');
+ [...groups].sort((a,b)=>a[0].localeCompare(b[0])).forEach(([g,ids])=>{
+  const tr=node('tr'),tdCheck=node('td'),cb=document.createElement('input');cb.type='checkbox';cb.style.width='auto';cb.checked=ids.every(i=>m15Selected.has(i));cb.indeterminate=!cb.checked&&ids.some(i=>m15Selected.has(i));cb.onchange=()=>{ids.forEach(i=>cb.checked?m15Selected.add(i):m15Selected.delete(i));m15Refresh()};tdCheck.append(cb);tr.append(tdCheck);td(tr,g);td(tr,String(ids.length));
+  const cell=node('td'),sel=document.createElement('select');sel.style.minWidth='190px';sel.append(new Option('— Без автоматско доделување —',''));v13Packages.filter(p=>p.is_active).forEach(p=>sel.append(new Option(p.name,p.id)));sel.value=m16Assignments.get(g)||'';sel.onchange=()=>{if(sel.value)m16Assignments.set(g,sel.value);else m16Assignments.delete(g)};cell.append(sel);tr.append(cell);body.append(tr)
+ });table.append(body);el.append(table);$('m16Info').textContent=groups.size+' групи · '+m15Entries.length+' канали. Предлозите не менуваат ништо во Supabase до увоз.';
+}
+function m16Suggest(){
+ const packs=v13Packages.filter(p=>p.is_active);const groups=[...new Set(m15Entries.map(m161Category))];let matched=0;
+ groups.forEach(g=>{const n=m16Norm(g.split(' / ').slice(1).join(' / '));const synonyms=/sport/.test(n)?['sport']:/movie|film|cinema/.test(n)?['movie','film','cinema']:/kid|cartoon/.test(n)?['kid','children']:/documentary|discovery/.test(n)?['documentary','doc']:/balkan|mkd|srb|hrv/.test(n)?['balkan']:[n];const match=packs.find(p=>synonyms.some(w=>m16Norm(p.name).includes(w)));if(match){m16Assignments.set(g,match.id);matched++}});m16Render();m15Msg('Предложени '+matched+' од '+groups.length+' групи. Провери ги изборите пред увоз.');
+}
+$('m16Suggest').onclick=m16Suggest;
+$('m16Reset').onclick=()=>{m16Assignments.clear();m16Render()};
+function m15Refresh(){
+ const q=$('m15Search').value.trim().toLocaleLowerCase();const rows=$('m15Rows');rows.replaceChildren();
+ const known=new Set(channels.map(c=>m15Key({url:c.stream_url})).filter(Boolean));const names=new Set(channels.map(c=>c.name.toLocaleLowerCase()));
+ m15Entries.forEach((x,i)=>{if(q&&!((x.name+' '+x.group).toLocaleLowerCase().includes(q)))return;
+ const tr=node('tr'),c=node('td'),check=document.createElement('input');check.type='checkbox';check.style.width='auto';check.checked=m15Selected.has(i);check.onchange=()=>{check.checked?m15Selected.add(i):m15Selected.delete(i)};c.append(check);tr.append(c);td(tr,x.name);const countryCell=node('td');countryCell.append(m161SelectCountry(x));tr.append(countryCell);const groupCell=node('td');const groupInput=document.createElement('input');groupInput.value=m161Group(x);groupInput.maxLength=90;groupInput.style.minWidth='145px';groupInput.onchange=()=>{x.groupOverride=groupInput.value.trim()||'Other';m16Render()};groupCell.append(groupInput);tr.append(groupCell);td(tr,known.has(m15Key(x))?'Постои (URL)':names.has(x.name.toLocaleLowerCase())?'Исто име — провери':'Нов');rows.append(tr)});
+ m16Render();m161UpdateInfo();
+ const pkg=$('m15Packages'),old=[...pkg.selectedOptions].map(o=>o.value);pkg.replaceChildren(...v13Packages.filter(x=>x.is_active).map(x=>new Option(x.name,x.id)));[...pkg.options].forEach(o=>o.selected=old.includes(o.value));
+}
+function m15Preview(raw){if(raw.length>20_000_000){m15Msg('Датотеката е поголема од 20 MB.',true);return}m15Entries=m15Parse(raw);m16Assignments.clear();m15Selected=new Set(m15Entries.map((_,i)=>i));m15Refresh();m15Msg('Прочитани '+m15Entries.length+' канали. Провери ги пред увоз.');}
+$('m15ReadFile').onclick=async()=>{const f=$('m15File').files?.[0];if(!f){m15Msg('Избери M3U датотека.',true);return}if(f.size>20_000_000){m15Msg('Максимум 20 MB.',true);return}try{m15Preview(await f.text())}catch(e){m15Msg(e.message,true)}};
+$('m15ReadUrl').onclick=async()=>{const url=$('m15Url').value.trim();if(!/^https?:\/\//i.test(url)){m15Msg('Внеси валиден http(s) URL.',true);return}const ctrl=new AbortController(),timeout=setTimeout(()=>ctrl.abort(),20000);try{m15Msg('Се чита URL...');const r=await fetch(url,{signal:ctrl.signal,credentials:'omit'});if(!r.ok)throw Error('HTTP '+r.status);const size=Number(r.headers.get('content-length')||0);if(size>20_000_000)throw Error('Листата е поголема од 20 MB');const raw=await r.text();m15Preview(raw)}catch(e){m15Msg('URL не може да се прочита. Можно е CORS ограничување. Преземи ја листата како датотека и увези ја локално. '+e.message,true)}finally{clearTimeout(timeout)}};
+$('m15Search').oninput=m15Refresh;
+$('m15All').onchange=e=>{const q=$('m15Search').value.trim().toLocaleLowerCase();m15Entries.forEach((x,i)=>{if((x.name+' '+x.group).toLocaleLowerCase().includes(q)){e.target.checked?m15Selected.add(i):m15Selected.delete(i)}});m15Refresh()};
+$('m15Clear').onclick=()=>{m15Selected.clear();$('m15All').checked=false;m15Refresh()};
+$('m15Import').onclick=async()=>{
+ const btn=$('m15Import');if(!m15Selected.size){m15Msg('Означи барем еден канал.',true);return}
+ const selected=[...m15Selected].map(i=>m15Entries[i]),pkgIds=[...$('m15Packages').selectedOptions].map(o=>o.value);const groupLinks=new Map(m16Assignments);
+ if(!confirm('Да се увезат '+selected.length+' канали'+(pkgIds.length?' во избраните пакети и групните предлози':'')+'?'))return;
+ btn.disabled=true;let added=0,existing=0,linked=0,failed=0;const errors=[];
+ try{
+  const known=new Map(channels.filter(c=>c.stream_url).map(c=>[m15Key({url:c.stream_url}),c.id]));const seen=new Set();
+  const groups=new Map(cats.map(c=>[c.name.toLocaleLowerCase(),c.id]));
+  const newPkgNames=[...new Set(selected.map(m161Category))].filter(n=>!v13Packages.some(p=>m16Norm(p.name)===m16Norm(n)));
+  const createP=$('m161CreatePackages').checked;
+  if(createP&&newPkgNames.length&&!confirm('Ќе се создадат '+newPkgNames.length+' нови ТВ-пакети: '+newPkgNames.slice(0,12).join(', ')+(newPkgNames.length>12?' ...':'')+'. Продолжи?'))throw Error('Увозот е откажан од корисникот');
+  const pkgByName=new Map(v13Packages.map(p=>[m16Norm(p.name),p.id]));
+  if(createP)for(const name of newPkgNames){const {data,error}=await sb.from('bliz_stream_packages').insert({name,description:'Автоматски создаден при M3U увоз'}).select('id').single();if(error){failed++;errors.push('Пакет '+name+': '+error.message)}else pkgByName.set(m16Norm(name),data.id)}
+  for(const x of selected){
+   const key=m15Key(x);if(seen.has(key)){existing++;continue}seen.add(key);
+   let id=known.get(key);
+   if(!id){
+    const groupName=m161Category(x);let catId=groups.get(groupName.toLocaleLowerCase())||null;
+    if(groupName&&!catId){const {data,error}=await sb.from('bliz_stream_categories').insert({name:groupName.slice(0,120),category_type:'live',sort_order:0}).select('id').single();if(error){failed++;errors.push(x.name+': категорија: '+error.message);continue}catId=data.id;groups.set(groupName.toLocaleLowerCase(),catId)}
+    const {data,error}=await sb.from('bliz_stream_channels').insert({name:x.name,category_id:catId,stream_url:x.url,logo_url:x.logo||null,epg_id:x.epg||null,is_active:true}).select('id').single();
+    if(error){failed++;errors.push(x.name+': '+error.message);continue}id=data.id;known.set(key,id);added++;
+   }else existing++;
+   for(const package_id of new Set([...pkgIds,groupLinks.get(m161Category(x)),createP?pkgByName.get(m16Norm(m161Category(x))):null].filter(Boolean))){const {error}=await sb.from('bliz_stream_package_channels').upsert({package_id,channel_id:id},{onConflict:'package_id,channel_id',ignoreDuplicates:true});if(error){failed++;errors.push(x.name+' → пакет: '+error.message)}else linked++}
+  }
+  await safeLoad();m15Selected.clear();m15Refresh();m15Msg('Увезени: '+added+' · Веќе постоеле: '+existing+' · Поврзувања со пакети: '+linked+' · Грешки: '+failed+(errors.length?' | '+errors.slice(0,3).join(' | '):''),failed>0);
+ }catch(e){m15Msg('Увозот е прекинат: '+e.message,true)}finally{btn.disabled=false}
+};
+
+// v17: categories named COUNTRY / GROUP; changes affect only category_id, never package memberships.
+// v18: paginated channel loading. Existing subscriptions, credits and package grants are unchanged.
+let v18Truncated=false;
+async function v18LoadAllChannels(){
+ const pageSize=500,maxRows=20000,all=[];v18Truncated=false;
+ for(let offset=0;offset<maxRows;offset+=pageSize){
+  const {data,error}=await sb.from('bliz_stream_channels').select('*').order('id',{ascending:true}).range(offset,offset+pageSize-1);
+  if(error)throw Error('Вчитување канали: '+error.message);
+  all.push(...(data||[]));
+  if(!data||data.length<pageSize)break;
+  if(offset+pageSize>=maxRows)v18Truncated=true;
+ }
+ channels=all;
+ const el=$('v18LoadInfo');if(el)el.textContent='Вчитани '+channels.length+' канали во страници од 500.'+(v18Truncated?' Достигнат е безбедносниот лимит од 20.000.':'');
+}
+async function v18BatchUpdate(ids,patch){
+ for(let i=0;i<ids.length;i+=100){const {error}=await sb.from('bliz_stream_channels').update(patch).in('id',ids.slice(i,i+100));if(error)throw Error('Променети '+i+' од '+ids.length+': '+error.message)}
+}
+async function v18DeleteSelected(){
+ const ids=[...v17Selected].filter(id=>channels.some(c=>c.id===id));
+ if(!ids.length)return v17Msg('Прво означи канали.',true);
+ if(!confirm('ВНИМАНИЕ: Трајно ќе избришеш '+ids.length+' канали. Ова може да влијае на ТВ-пакети. Продолжи?'))return;
+ const phrase=prompt('За потврда напиши IZBRISI '+ids.length+':');
+ if(phrase!=='IZBRISI '+ids.length)return v17Msg('Бришењето е откажано.');
+ const btn=$('v18Delete');btn.disabled=true;
+ try{let done=0;for(let i=0;i<ids.length;i+=100){const {error}=await sb.from('bliz_stream_channels').delete().in('id',ids.slice(i,i+100));if(error)throw Error('Избришани '+done+' од '+ids.length+': '+error.message);done+=Math.min(100,ids.length-i)}v17Selected.clear();v17Msg('Избришани '+done+' канали.');await safeLoad()}catch(e){v17Msg('Грешка: '+e.message,true);await safeLoad()}finally{btn.disabled=false}
+}
+$('v18Delete').onclick=v18DeleteSelected;
+$('v18Reload').onclick=()=>safeLoad();
+const v17Countries=['Other','CZ','SK','MK','RS','HR','BA','SI','BG','AL','ME','DE','AT','CH','IT','PL','FR','GB','US','TR','GR','RO','HU'];
+const v17Selected=new Set();
+function v17Parts(c){const name=cats.find(x=>x.id===c.category_id)?.name||'Other / Other';const p=name.split(' / ');return p.length>1?[p.shift().trim()||'Other',p.join(' / ').trim()||'Other']:['Other',name.trim()||'Other']}
+function v17CountryOptions(sel,any=false){const val=sel.value;sel.replaceChildren();if(any)sel.add(new Option('Сите држави',''));for(const code of [...new Set([...v17Countries,...channels.map(c=>v17Parts(c)[0])])].sort())sel.add(new Option(code,code));sel.value=[...sel.options].some(o=>o.value===val)?val:(any?'':'Other')}
+function v17Setup(){v17CountryOptions($('v17CountryFilter'),true);v17CountryOptions($('v17TargetCountry'));const gf=$('v17GroupFilter'),prev=gf.value;gf.replaceChildren(new Option('Сите групи',''));const groups=[...new Set(channels.map(c=>v17Parts(c)[1]))].sort();groups.forEach(g=>gf.add(new Option(g,g)));gf.value=groups.includes(prev)?prev:'';const dl=$('v17GroupNames');dl.replaceChildren();groups.forEach(g=>{const op=document.createElement('option');op.value=g;dl.append(op)});v17Render()}
+function v17Visible(){const q=$('v17Search').value.trim().toLocaleLowerCase(),country=$('v17CountryFilter').value,group=$('v17GroupFilter').value;return channels.filter(c=>{const [co,gr]=v17Parts(c);return (!q||c.name.toLocaleLowerCase().includes(q))&&(!country||co===country)&&(!group||gr===group)})}
+function v17Render(){const body=$('v17Rows');body.replaceChildren();const list=v17Visible();for(const c of list){const [co,gr]=v17Parts(c),tr=node('tr'),cell=node('td'),cb=document.createElement('input');cb.type='checkbox';cb.style.width='auto';cb.checked=v17Selected.has(c.id);cb.onchange=()=>{cb.checked?v17Selected.add(c.id):v17Selected.delete(c.id);v17Count()};cell.append(cb);tr.append(cell);td(tr,c.name);td(tr,co);td(tr,gr);const act=node('td'),b=node('button','Уреди');b.type='button';b.className='secondary';b.onclick=()=>v17Edit(c);act.append(b);tr.append(act);body.append(tr)}v17Count()}
+function v17Count(){$('v17Count').textContent='Прикажани: '+v17Visible().length+' · Означени: '+v17Selected.size+' · Вчитани канали: '+channels.length+(v18Truncated?' (прикажани првите 20000)':'')}
+function v17Msg(t,bad=false){$('v17Info').textContent=t;$('v17Info').style.color=bad?'#ff8c8c':''}
+async function v17EnsureCategory(country,group){const name=(country+' / '+group).slice(0,120);let cat=cats.find(c=>c.name.toLocaleLowerCase()===name.toLocaleLowerCase());if(cat)return cat.id;const {data,error}=await sb.from('bliz_stream_categories').insert({name,category_type:'live',sort_order:0}).select('id').single();if(error)throw Error('Група '+name+': '+error.message);cats.push({...data,name,category_type:'live',sort_order:0});return data.id}
+async function v17Edit(c){const [co,gr]=v17Parts(c);const name=prompt('Име на канал:',c.name);if(name===null)return;if(!name.trim())return v17Msg('Името не смее да е празно.',true);const country=prompt('Држава (CZ, MK, RS...):',co);if(country===null)return;const group=prompt('Група (Sport, Movies...):',gr);if(group===null)return;const logo=prompt('Лого URL (може празно):',c.logo_url||'');if(logo===null)return;const epg=prompt('EPG ID (може празно):',c.epg_id||'');if(epg===null)return;const url=prompt('Stream URL (може празно):',c.stream_url||'');if(url===null)return;try{const category_id=await v17EnsureCategory((country.trim()||'Other').toUpperCase(),group.trim()||'Other');const {error}=await sb.from('bliz_stream_channels').update({name:name.trim(),category_id,logo_url:logo.trim()||null,epg_id:epg.trim()||null,stream_url:url.trim()||null}).eq('id',c.id);if(error)throw error;v17Msg('Каналот е ажуриран.');await safeLoad()}catch(e){v17Msg(e.message,true)}}
+$('v17Search').oninput=v17Render;$('v17CountryFilter').onchange=v17Render;$('v17GroupFilter').onchange=v17Render;
+$('v17All').onchange=e=>{for(const c of v17Visible())e.target.checked?v17Selected.add(c.id):v17Selected.delete(c.id);v17Render()};
+$('v17Clear').onclick=()=>{v17Selected.clear();$('v17All').checked=false;v17Render()};
+$('v17Move').onclick=async()=>{const country=$('v17TargetCountry').value,group=$('v17TargetGroup').value.trim();const ids=[...v17Selected].filter(id=>channels.some(c=>c.id===id));if(!ids.length)return v17Msg('Прво означи канали.',true);if(!group)return v17Msg('Внеси име на група.',true);if(!confirm('Премести '+ids.length+' канали во '+country+' / '+group+'? Пакетите остануваат исти.'))return;const btn=$('v17Move');btn.disabled=true;try{const category_id=await v17EnsureCategory(country,group);await v18BatchUpdate(ids,{category_id});v17Selected.clear();v17Msg('Успешно преместени '+ids.length+' канали.');await safeLoad()}catch(e){v17Msg('Грешка: '+e.message,true)}finally{btn.disabled=false}};
+// Keep editor synchronized with existing refresh / imports without altering other workflows.
+const v17OriginalRenderChannels=renderChannels;
+renderChannels=function(){v17OriginalRenderChannels();v17Setup()};
+
+// Playback credentials are displayed once and are never stored in localStorage.
+function playbackButton(subscription){
+ const b=node('button','M3U пристап');b.type='button';b.className='secondary';
+ b.onclick=()=>openPlayback(subscription,b);return b;
+}
+async function openPlayback(subscription,button){
+ button.disabled=true;
+ const target=currentReseller?'resellerNotice':'notice';
+ try{
+  const {data:info,error}=await sb.rpc('bliz_stream_playback_info',{p_subscription:subscription.id});
+  if(error)throw error;
+  document.getElementById('playbackCredentials')?.remove();
+  const dialog=node('dialog');dialog.id='playbackCredentials';dialog.style.cssText='max-width:650px;width:90%;color:#eaf4ff;background:#14263c;border:1px solid #39546f;border-radius:14px;padding:24px';
+  dialog.append(node('h2','M3U пристап · '+subscription.client_label),node('p','Истекува: '+expiryText(subscription.expires_at)));
+  const close=node('button','Затвори');close.type='button';close.className='secondary';close.onclick=()=>{dialog.close();dialog.remove()};
+  dialog.addEventListener('close',()=>dialog.remove());
+  const status=node('p');status.setAttribute('role','status');
+  const output=node('div');
+  const showCredentials=credentials=>{
+   output.replaceChildren();
+   const url=new URL('https://gxytdtvajhixpwtteryq.supabase.co/functions/v1/bliz-stream-playlist');url.searchParams.set('username',credentials.username);url.searchParams.set('password',credentials.password);url.searchParams.set('type','m3u_plus');
+   for(const [label,value,secret] of [['Корисничко име',credentials.username,false],['Лозинка',credentials.password,true],['M3U линк',url.href,false]]){
+    const field=node('label',label),input=document.createElement('input');input.type=secret?'password':'text';input.readOnly=true;input.value=value;input.autocomplete='off';field.append(input);output.append(field);
+    const copy=node('button','Копирај '+label.toLowerCase());copy.type='button';copy.className='secondary';copy.onclick=async()=>{try{await navigator.clipboard.writeText(value);status.textContent='Копирано.'}catch{input.focus();input.select();status.textContent='Копирај го означениот текст рачно.'}};output.append(copy);
+   }
+   output.append(node('p','Зачувај ги сега. Лозинката не може повторно да се прочита; може само да се создаде нова. Линкот е приватен и содржи лозинка.'));
+  };
+  const create=node('button',info?'Создај нова лозинка':'Создај M3U пристап');create.type='button';create.className='primary';
+  create.onclick=async()=>{
+   if(info&&!confirm('Старата лозинка и старите M3U линкови веднаш ќе престанат да важат при ново преземање. Да создадам нова лозинка?'))return;
+   create.disabled=true;
+   try{const {data,error}=await sb.rpc('bliz_stream_issue_playback',{p_subscription:subscription.id,p_rotate:!!info});if(error)throw error;showCredentials(data);status.textContent='Пристапот е создаден. Важи за доделените активни пакети.';create.remove()}catch(e){status.textContent=e.message;create.disabled=false}
+  };
+  if(info){
+   dialog.append(node('p','Корисник: '+info.username+' · '+(info.is_active?'Активен':'Паузиран')));
+   const toggle=node('button',info.is_active?'Паузирај пристап':'Активирај пристап');toggle.type='button';toggle.className='secondary';
+   toggle.onclick=async()=>{toggle.disabled=true;const {error}=await sb.rpc('bliz_stream_set_playback_active',{p_subscription:subscription.id,p_active:!info.is_active});if(error){status.textContent=error.message;toggle.disabled=false}else{status.textContent='Статусот е променет.';toggle.remove()}};
+   dialog.append(toggle);
+  }
+  dialog.append(node('p','Прво додели ТВ-пакети на оваа претплата. Без доделени пакети, листата е празна. Истекувањето се проверува при секое преземање на листата; изворните адреси на каналите остануваат директни.'),create,output,status,close);
+  document.body.append(dialog);dialog.showModal();
+ }catch(e){message(['PGRST202','42883'].includes(e.code)?'M3U пристапот сè уште не е активиран на серверот.':e.message,true,target)}finally{button.disabled=false}
+}
+
+// Uses already-issued free trials; does not create paid subscriptions or debit credits.
+function trialPlaybackButton(trial){
+ const button=node('button','Тест M3U');button.type='button';button.className='secondary';
+ button.onclick=()=>openTrialPlayback(trial.id,button);return button;
+}
+async function openTrialPlayback(id,button){
+ if(button)button.disabled=true;
+ const target=currentReseller?'resellerNotice':'notice';
+ try{
+  const {data:info,error}=await sb.rpc('bliz_stream_trial_playback_info',{p_trial:id});if(error)throw error;
+  document.getElementById('playbackCredentials')?.remove();
+  const dialog=node('dialog');dialog.id='playbackCredentials';dialog.style.cssText='max-width:650px;width:90%;color:#eaf4ff;background:#14263c;border:1px solid #39546f;border-radius:14px;padding:24px';
+  dialog.append(node('h2','Бесплатен тест M3U'),node('p','Истекува: '+expiryText(info.expires_at)),node('p','Не одзема кредити. Важи до истекувањето на овој тест-запис.'));
+  const label=node('label','Избери ТВ-пакети'),packages=document.createElement('select');packages.multiple=true;packages.size=5;
+  const available=Array.isArray(info.available_packages)?info.available_packages:[];
+  available.forEach(p=>{const option=new Option(p.name,p.id);option.selected=info.packages.includes(p.id)||(!info.username&&available.length===1);packages.add(option)});
+  label.append(packages);dialog.append(label);
+  const selected=()=>[...packages.selectedOptions].map(p=>p.value);
+  const status=node('p');status.setAttribute('role','status');
+  const output=node('div');
+  const showCredentials=data=>{
+   output.replaceChildren();const url=new URL('https://gxytdtvajhixpwtteryq.supabase.co/functions/v1/bliz-stream-playlist');url.searchParams.set('username',data.username);url.searchParams.set('password',data.password);url.searchParams.set('type','m3u_plus');
+   for(const [name,value,secret] of [['Корисничко име',data.username,false],['Лозинка',data.password,true],['Тест M3U URL',url.href,false]]){
+    const field=node('label',name),input=document.createElement('input');input.type=secret?'password':'text';input.readOnly=true;input.autocomplete='off';input.value=value;field.append(input);output.append(field);
+    const copy=node('button','Копирај '+name.toLowerCase());copy.type='button';copy.className='secondary';copy.onclick=async()=>{try{await navigator.clipboard.writeText(value);status.textContent='Копирано.'}catch{input.focus();input.select();status.textContent='Копирај го означениот текст рачно.'}};output.append(copy);
+   }
+   output.append(node('p','Зачувај ги сега: лозинката се прикажува само еднаш. Линкот е приватен.'));
+  };
+  const create=node('button',info.username?'Нова тест-лозинка':'Создај тест URL');create.type='button';create.className='primary';
+  const expired=!Number.isFinite(Date.parse(info.expires_at))||Date.parse(info.expires_at)<=Date.now();
+  create.disabled=expired||available.length===0;
+  if(expired)status.textContent='Овој тест истекол. Создај нов бесплатен тест.';
+  else if(!available.length)status.textContent='Нема дозволени активни ТВ-пакети. Прво додели пакет на реселерот или создај активен пакет.';
+  create.onclick=async()=>{
+   if(!selected().length){status.textContent='Избери барем еден ТВ-пакет.';return}
+   if(info.username&&!confirm('Старата тест-лозинка веднаш ќе престане да важи при ново преземање. Да продолжам?'))return;
+   create.disabled=true;
+   try{const {data,error}=await sb.rpc('bliz_stream_issue_trial_playback',{p_trial:id,p_packages:selected(),p_rotate:!!info.username});if(error)throw error;showCredentials(data);status.textContent='Тест URL е создаден, без одземање кредити.';create.remove()}catch(e){status.textContent=e.message;create.disabled=false}
+  };
+  if(info.username){
+   dialog.append(node('p','Корисник: '+info.username+' · '+(info.is_active?'Активен':'Паузиран')));
+   const save=node('button','Зачувај пакети');save.type='button';save.className='secondary';save.disabled=expired;
+   save.onclick=async()=>{if(!selected().length){status.textContent='Избери барем еден пакет.';return}save.disabled=true;try{const {error}=await sb.rpc('bliz_stream_set_trial_packages',{p_trial:id,p_packages:selected()});if(error)throw error;status.textContent='Пакетите се зачувани.'}catch(e){status.textContent=e.message}finally{save.disabled=false}};
+   const toggle=node('button',info.is_active?'Паузирај тест':'Активирај тест');toggle.type='button';toggle.className='secondary';toggle.disabled=expired;
+   toggle.onclick=async()=>{toggle.disabled=true;try{const {error}=await sb.rpc('bliz_stream_set_trial_playback_active',{p_trial:id,p_active:!info.is_active});if(error)throw error;status.textContent='Статусот е променет.';toggle.remove()}catch(e){status.textContent=e.message;toggle.disabled=false}};
+   dialog.append(save,toggle);
+  }
+  const close=node('button','Затвори');close.type='button';close.className='secondary';close.onclick=()=>{dialog.close();dialog.remove()};dialog.addEventListener('close',()=>dialog.remove());
+  dialog.append(create,output,status,close);document.body.append(dialog);dialog.showModal();
+ }catch(e){message(['PGRST202','42883'].includes(e.code)?'Бесплатниот M3U тест сè уште не е активиран на серверот.':e.message,true,target)}finally{if(button)button.disabled=false}
+}
+
+</script></body></html>
+
+
+
+
+
+
