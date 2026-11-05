@@ -172,6 +172,16 @@ async function devicesView(){
 function deviceForm(host,d){
  host.replaceChildren();const c=card(d?'Уреди уред':'Нов уред'),form=node('form');
  form.innerHTML='<label>Име<input name="clientName" required maxlength="120"></label><label>MAC / ID<input name="mac" required placeholder="02:AA:BB:CC:DD:EE"></label><label>Рок (локално време, празно = без рок)<input name="expiry" type="datetime-local"></label><label>Тип на листа<select name="sourceType"><option value="">Задржи постојна / без нова листа</option><option value="m3u">M3U</option><option value="xtream">Xtream</option></select></label><label>URL на новата листа<input name="url" type="url"></label><label>Xtream корисник<input name="username" autocomplete="off"></label><label>Xtream лозинка<input name="sourcePassword" type="password" autocomplete="off"></label><label>Овозможен<input name="enabled" type="checkbox" checked></label><label>Отстрани ја постојната листа<input name="clear" type="checkbox"></label><button>Зачувај уред</button>';
+ const macInput=form.elements.mac;
+ macInput.maxLength=17;macInput.autocomplete='off';macInput.spellcheck=false;
+ macInput.addEventListener('input',()=>{
+  const caret=macInput.selectionStart??macInput.value.length;
+  const digitsBefore=macInput.value.slice(0,caret).replace(/[^a-fA-F0-9]/g,'').length;
+  const hex=macInput.value.replace(/[^a-fA-F0-9]/g,'').slice(0,12).toUpperCase();
+  macInput.value=(hex.match(/.{1,2}/g)||[]).join(':');
+  const position=Math.min(macInput.value.length,digitsBefore+Math.floor(Math.max(0,digitsBefore-1)/2));
+  macInput.setSelectionRange(position,position);
+ });
  if(d){form.elements.clientName.value=d.name;form.elements.mac.value=d.mac;form.elements.mac.readOnly=true;form.elements.enabled.checked=!!d.enabled;if(d.expires_at){const time=new Date(d.expires_at);form.elements.expiry.value=new Date(time-time.getTimezoneOffset()*60000).toISOString().slice(0,16);}}
  form.addEventListener('submit',event=>{event.preventDefault();guard(async()=>{
   const f=form.elements;if(f.clear.checked&&f.sourceType.value)throw Error('Избери нова листа или отстранување на постојната.');
