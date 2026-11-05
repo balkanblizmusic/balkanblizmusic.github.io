@@ -1,0 +1,10 @@
+<!doctype html>
+<html lang="mk"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><meta name="referrer" content="no-referrer"><title>BLiZ TV · Super Admin</title><link rel="stylesheet" href="styles.css"><script src="config.js" defer></script><script src="qrcode.js" defer></script><script defer src="app.js"></script></head>
+<body><div class="shell"><aside><a class="brand" href="#codes">BLiZ<span>TV</span></a><p class="eyebrow">CONTROL CENTER</p><nav id="nav" hidden><a href="#codes">Активациски кодови</a><a href="#resellers" data-admin>Реселери</a><a href="#credits" data-admin>Кредити</a><a href="#devices" data-admin>Уреди · MAC / ID</a><a href="#history">Историја</a></nav><div class="account"><span id="account"></span><button id="logout" class="quiet" hidden>Одјави се</button></div></aside><main>
+<header><p class="eyebrow">BLiZ TV / SUPER ADMIN</p><h1 id="pageTitle">Добредојде назад.</h1><p id="subtitle">Уреди, кодови и реселери. На едно место.</p></header>
+<p id="notice" role="status" hidden></p>
+<section id="login" class="card narrow"><h2>Најави се</h2><form id="loginForm"><label>Емаил<input id="email" type="email" autocomplete="username" required></label><label>Лозинка<input id="password" type="password" autocomplete="current-password" required></label><button type="submit">Најави се</button></form><button id="forgot" class="quiet">Заборавена лозинка?</button></section>
+<section id="recovery" class="card narrow" hidden><h2>Постави лозинка</h2><form id="passwordForm"><label>Нова лозинка<input id="newPassword" type="password" autocomplete="new-password" minlength="12" required></label><label>Повтори ја лозинката<input id="confirmPassword" type="password" autocomplete="new-password" minlength="12" required></label><button>Зачувај лозинка</button></form></section>
+<section id="workspace" hidden><div id="content"></div></section>
+<footer>BLiZ TV · Управување со пристап и активации</footer>
+</main></div></body></html>
