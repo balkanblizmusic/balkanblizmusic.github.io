@@ -1,0 +1,12 @@
+{
+  "id": "/super-admin/",
+  "name": "BLiZ TV Super Admin",
+  "short_name": "BLiZ TV Admin",
+  "lang": "mk",
+  "start_url": "/super-admin/",
+  "scope": "/super-admin/",
+  "display": "standalone",
+  "background_color": "#0b1218",
+  "theme_color": "#0b1218",
+  "icons": [{"src": "/bliztv-logo.png", "sizes": "1024x1024", "type": "image/png", "purpose": "any"}]
+}
