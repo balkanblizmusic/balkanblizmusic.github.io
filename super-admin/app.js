@@ -88,7 +88,7 @@ function generated(code){const c=node('div',undefined,'generated');c.append(node
 async function render(){
  if(state.role==='reseller'){const balance=await rpc('bliz_session');$('creditBalance').textContent=balance.credits+' кредити';$('creditBalance').hidden=false;}else{$('creditBalance').hidden=true;}
 
- const requested=location.hash.slice(1)||'codes';const route=state.role==='admin'?requested:['codes','history'].includes(requested)?requested:'codes';
+ const requested=location.hash.slice(1)||'codes';const route=state.role==='admin'?requested:['codes','history','devices'].includes(requested)?requested:'codes';
  const titles={codes:'Активациски кодови',resellers:'Реселери',credits:'Кредити',devices:'Уреди · MAC / ID',history:'Историја на кредити'};
  $('pageTitle').textContent=titles[route]||titles.codes;
  document.querySelectorAll('nav a').forEach(a=>a.setAttribute('aria-current',a.hash==='#'+route?'page':'false'));
@@ -171,7 +171,23 @@ async function devicesView(){
 }
 function deviceForm(host,d){
  host.replaceChildren();const c=card(d?'Уреди уред':'Нов уред'),form=node('form');
- form.innerHTML='<label>Име<input name="clientName" required maxlength="120"></label><label>MAC / ID<input name="mac" required placeholder="02:AA:BB:CC:DD:EE"></label><label>Рок (локално време, празно = без рок)<input name="expiry" type="datetime-local"></label><label>Тип на листа<select name="sourceType"><option value="">Задржи постојна / без нова листа</option><option value="m3u">M3U</option><option value="xtream">Xtream</option></select></label><label>URL на новата листа<input name="url" type="url"></label><label>Xtream корисник<input name="username" autocomplete="off"></label><label>Xtream лозинка<input name="sourcePassword" type="password" autocomplete="off"></label><label>Овозможен<input name="enabled" type="checkbox" checked></label><label>Отстрани ја постојната листа<input name="clear" type="checkbox"></label><button>Зачувај уред</button>';
+ form.innerHTML='<label>Име<input name="clientName" required maxlength="120"></label><label>MAC / ID<input name="mac" required placeholder="02:AA:BB:CC:DD:EE"></label><label>Пакет / рок<select name="period"><option value="none">Без рок</option><option value="24h">24 часа</option><option value="1">1 месец</option><option value="3">3 месеци</option><option value="6">6 месеци</option><option value="12">1 година</option><option value="24">2 години</option><option value="custom">Рачно избран рок</option></select></label><label>Важи до (локално време)<input name="expiry" type="datetime-local"></label><label>Тип на листа<select name="sourceType"><option value="">Задржи постојна / без нова листа</option><option value="m3u">M3U</option><option value="xtream">Xtream</option></select></label><label>URL на новата листа<input name="url" type="url"></label><label>Xtream корисник<input name="username" autocomplete="off"></label><label>Xtream лозинка<input name="sourcePassword" type="password" autocomplete="off"></label><label>Овозможен<input name="enabled" type="checkbox" checked></label><label>Отстрани ја постојната листа<input name="clear" type="checkbox"></label><button>Зачувај уред</button>';
+ const period=form.elements.period,expiryInput=form.elements.expiry;
+ function expiryForPeriod(value,now=new Date()){
+  if(value==='24h')return new Date(now.getTime()+24*60*60*1000);
+  const months=Number(value),result=new Date(now),day=result.getDate();
+  result.setDate(1);result.setMonth(result.getMonth()+months);
+  const lastDay=new Date(result.getFullYear(),result.getMonth()+1,0).getDate();
+  result.setDate(Math.min(day,lastDay));return result;
+ }
+ period.value=d?.expires_at?'custom':'none';
+ period.addEventListener('change',()=>{
+  if(period.value==='none'){expiryInput.value='';return;}
+  if(period.value==='custom')return;
+  const end=expiryForPeriod(period.value);
+  expiryInput.value=new Date(end-end.getTimezoneOffset()*60000).toISOString().slice(0,16);
+ });
+ expiryInput.addEventListener('input',()=>{period.value=expiryInput.value?'custom':'none';});
  const macInput=form.elements.mac;
  macInput.maxLength=17;macInput.autocomplete='off';macInput.spellcheck=false;
  macInput.addEventListener('input',()=>{
@@ -185,7 +201,7 @@ function deviceForm(host,d){
  if(d){form.elements.clientName.value=d.name;form.elements.mac.value=d.mac;form.elements.mac.readOnly=true;form.elements.enabled.checked=!!d.enabled;if(d.expires_at){const time=new Date(d.expires_at);form.elements.expiry.value=new Date(time-time.getTimezoneOffset()*60000).toISOString().slice(0,16);}}
  form.addEventListener('submit',event=>{event.preventDefault();guard(async()=>{
   const f=form.elements;if(f.clear.checked&&f.sourceType.value)throw Error('Избери нова листа или отстранување на постојната.');
-  const device={action:d?'update':'create',mac:f.mac.value.trim().toUpperCase(),name:f.clientName.value.trim(),enabled:f.enabled.checked,expires_at:f.expiry.value?new Date(f.expiry.value).toISOString():null};
+  const device={action:d?'update':'create',mac:f.mac.value.trim().toUpperCase(),name:f.clientName.value.trim(),enabled:f.enabled.checked,expires_at:f.period.value==='none'?null:f.period.value==='custom'?(f.expiry.value?new Date(f.expiry.value).toISOString():null):expiryForPeriod(f.period.value).toISOString()};
   if(d)device.revision=d.revision;if(f.clear.checked)device.clear_source=true;
   if(f.sourceType.value){const url=new URL(f.url.value.trim());if(!['http:','https:'].includes(url.protocol)||url.username||url.password)throw Error('Потребен е HTTP/HTTPS URL без вградени credentials.');device.source={type:f.sourceType.value,url:url.href};if(f.sourceType.value==='xtream'){device.source.username=f.username.value.trim();device.source.password=f.sourcePassword.value;}}
   await rpc('bliz_panel_save',{p_device:device});await render();notice('Уредот е зачуван.');
