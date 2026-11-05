@@ -43,7 +43,7 @@ async function paidRequest(name,params){
  try{const answer=await rpc(name,{...params,p_request_id:request.id});sessionStorage.removeItem(pendingKey());return answer;}
  catch(error){if(error.status===400||error.status===403)sessionStorage.removeItem(pendingKey());else notice('Исходот не е потврден. Повтори го истото барање за да нема двојна наплата.',true);throw error;}
 }
-function showLogin(){state.role=null;$('login').hidden=false;$('recovery').hidden=true;$('workspace').hidden=true;$('nav').hidden=true;$('logout').hidden=true;$('account').textContent='';$('content').replaceChildren();}
+function showLogin(){state.role=null;$('creditBalance').hidden=true;$('creditBalance').textContent='';$('login').hidden=false;$('recovery').hidden=true;$('workspace').hidden=true;$('nav').hidden=true;$('logout').hidden=true;$('account').textContent='';$('content').replaceChildren();}
 async function enter(){
  const session=await rpc('bliz_session');state.role=session.role;
  $('login').hidden=true;$('recovery').hidden=true;$('workspace').hidden=false;$('nav').hidden=false;$('logout').hidden=false;
@@ -86,6 +86,8 @@ function codeQR(code){
 }
 function generated(code){const c=node('div',undefined,'generated');c.append(node('small','АКТИВАЦИСКИ КОД'),node('strong',code,'code'),button('Копирај',async()=>{await navigator.clipboard.writeText(code);notice('Кодот е копиран.');}),codeQR(code));return c;}
 async function render(){
+ if(state.role==='reseller'){const balance=await rpc('bliz_session');$('creditBalance').textContent=balance.credits+' кредити';$('creditBalance').hidden=false;}else{$('creditBalance').hidden=true;}
+
  const requested=location.hash.slice(1)||'codes';const route=state.role==='admin'?requested:['codes','history'].includes(requested)?requested:'codes';
  const titles={codes:'Активациски кодови',resellers:'Реселери',credits:'Кредити',devices:'Уреди · MAC / ID',history:'Историја на кредити'};
  $('pageTitle').textContent=titles[route]||titles.codes;
