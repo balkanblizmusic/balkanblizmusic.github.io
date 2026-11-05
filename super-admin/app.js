@@ -104,6 +104,10 @@ async function codesView(){
   if(!confirm('Создај '+label+'?'+(state.role==='reseller'?' Цена: '+({test:0,yearly:1,lifetime:2}[type])+' кредити.':'')))return;
   const answer=await paidRequest('bliz_generate_code',{p_type:type});await render();$('content').prepend(generated(answer.activation_code));notice('Кодот е создаден. Рокот започнува при првата активација.');
  }));c.append(actions,node('p','TEST кодовите траат 24 часа од активацијата. Реселерите имаат лимит од 20 TEST кодови дневно (UTC).','muted'));$('content').append(c);
+ if(state.role==='admin')$('content').append(button('Избриши истечени кодови',async()=>{
+  if(!confirm('Тргни ги сите кодови со поминат рок од листата? Активните, неактивираните кодови и историјата на кредити се зачувуваат.'))return;
+  const answer=await rpc('bliz_admin_delete_expired');state.page=0;await render();notice('Избришани истечени кодови: '+answer.deleted+'.');
+ },'danger'));
  const search=node('form',undefined,'toolbar'),input=node('input');input.placeholder='Пребарај код или клиент';input.setAttribute('aria-label','Пребарај код или клиент');input.value=state.search;const submit=node('button','Пребарај');search.append(input,submit);
  search.addEventListener('submit',event=>{event.preventDefault();guard(async()=>{state.search=input.value.trim();state.page=0;await render();});});$('content').append(search);
  const data=await rpc('bliz_codes',{p_search:state.search,p_page:state.page}),grid=node('div',undefined,'grid');
